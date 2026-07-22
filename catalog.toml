@@ -1,0 +1,21 @@
+[[plugin]]
+id = "rael2pac/arch-updater"
+name = "Arch Update"
+version = "3.0.0"
+author = "rael2pac"
+license = "MIT"
+icon = "arrow-big-down-lines"
+description = "A plugin to manage updates on Arch Linux (system, AUR, Flatpak)"
+plugin_api = 3
+tags = ["Bar", "Desktop", "Panel", "Launcher", "System", "Utility"]
+
+[[plugin]]
+id = "rael2pac/hdmi-toggle"
+name = "HDMI Toggle"
+version = "1.0.0"
+author = "rael2pac"
+license = "MIT"
+icon = "device-desktop"
+description = "A plugin to manage HDMI monitors via niri"
+plugin_api = 3
+tags = ["Bar", "Desktop", "Panel", "Display"]
