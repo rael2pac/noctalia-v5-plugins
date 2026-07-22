@@ -1,0 +1,8 @@
+{
+  "panel.title": "Monitors",
+  "panel.on": "On",
+  "panel.off": "Off",
+  "panel.noMonitors": "No monitors detected",
+  "settings.refreshInterval.label": "Refresh interval",
+  "settings.refreshInterval.description": "How often to poll monitor status (seconds)"
+}

@@ -1,0 +1,45 @@
+{
+    "tooltip.availableUpdates": "Atualizações Disponíveis",
+    "tooltip.noUpdates": "Sem atualizações",
+    "tooltip.noctaliaUpdates": "Atualizações do Noctalia disponíveis",
+
+    "toast.refreshing": "Buscando atualizações...",
+    "toast.updatesAvailable": "atualizações disponíveis",
+
+    "panel.title": "Archlinux Update",
+    "panel.noUpdates": "Nenhuma atualização disponível",
+    "panel.refresh": "Verificar",
+    "panel.update": "Atualizar Tudo",
+
+    "launcher.refresh": "Verificar atualizações disponíveis",
+    "launcher.update": "Atualizar sistema",
+    "launcher.search": "Pesquisar atualizações disponíveis",
+    "launcher.searchHint": "Digite para pesquisar pacotes",
+    "launcher.noUpdates": "Nenhuma atualização disponível",
+    "launcher.noMatch": "Nenhum pacote corresponde à sua busca",
+    "launcher.refreshStarted": "Verificando atualizações...",
+
+    "settings.systemCmd.label": "Comando do Sistema",
+    "settings.systemCmd.description": "Comando para verificar atualizações do sistema (formato: nome verolda -> vernova)",
+    "settings.aurCmd.label": "Comando AUR",
+    "settings.aurCmd.description": "Comando para verificar atualizações AUR (deixe vazio para desativar)",
+    "settings.flatpakEnabled.label": "Flatpak",
+    "settings.flatpakEnabled.description": "Ativar verificação de atualizações Flatpak",
+    "settings.refreshInterval.label": "Intervalo de Verificação (minutos)",
+    "settings.refreshInterval.description": "Frequência de verificação automática de atualizações",
+    "settings.noctaliaDetection.label": "Destaque Noctalia",
+    "settings.noctaliaDetection.description": "Destacar quando componentes do Noctalia tiverem atualização",
+    "settings.cleanupAfterUpdate.label": "Limpeza Após Atualização",
+    "settings.cleanupAfterUpdate.description": "Executar limpeza do sistema após instalar atualizações",
+    "settings.cachePreserveList.label": "Pastas a Preservar no Cache",
+    "settings.cachePreserveList.description": "Nomes das pastas em ~/.cache para preservar durante a limpeza (separados por espaço)",
+    "settings.showToasts.label": "Mostrar Notificações",
+    "settings.showToasts.description": "Mostrar notificações para eventos de verificação",
+
+    "settings.bar.hideOnEmpty.label": "Ocultar Se Vazio",
+    "settings.bar.hideOnEmpty.description": "Ocultar widget se não houver atualizações disponíveis",
+    "settings.bar.boldText.label": "Contagem em Negrito",
+    "settings.bar.boldText.description": "Exibir a contagem de atualizações em negrito",
+    "settings.bar.noctaliaHighlight.label": "Destaque Noctalia",
+    "settings.bar.noctaliaHighlight.description": "Destacar quando o Noctalia tiver atualizações"
+}

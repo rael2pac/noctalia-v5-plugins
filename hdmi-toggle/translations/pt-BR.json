@@ -1,0 +1,8 @@
+{
+  "panel.title": "Monitores",
+  "panel.on": "Ligado",
+  "panel.off": "Desligado",
+  "panel.noMonitors": "Nenhum monitor detectado",
+  "settings.refreshInterval.label": "Intervalo de atualizacao",
+  "settings.refreshInterval.description": "Com que frequencia verificar o status dos monitores (segundos)"
+}

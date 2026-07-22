@@ -1,0 +1,45 @@
+{
+    "tooltip.availableUpdates": "Available Updates",
+    "tooltip.noUpdates": "No updates",
+    "tooltip.noctaliaUpdates": "Noctalia Updates available",
+
+    "toast.refreshing": "Refreshing updates...",
+    "toast.updatesAvailable": "updates available",
+
+    "panel.title": "Archlinux Update",
+    "panel.noUpdates": "No updates available",
+    "panel.refresh": "Refresh",
+    "panel.update": "Update All",
+
+    "launcher.refresh": "Refresh available updates",
+    "launcher.update": "Update system",
+    "launcher.search": "Search available updates",
+    "launcher.searchHint": "Type to search packages",
+    "launcher.noUpdates": "No updates available",
+    "launcher.noMatch": "No packages match your search",
+    "launcher.refreshStarted": "Checking for updates...",
+
+    "settings.systemCmd.label": "System Command",
+    "settings.systemCmd.description": "Command to check for system updates (output: name oldver -> newver)",
+    "settings.aurCmd.label": "AUR Command",
+    "settings.aurCmd.description": "Command to check for AUR updates (leave blank to disable)",
+    "settings.flatpakEnabled.label": "Flatpak",
+    "settings.flatpakEnabled.description": "Enable Flatpak update checking",
+    "settings.refreshInterval.label": "Refresh Interval (minutes)",
+    "settings.refreshInterval.description": "How often to check for updates automatically",
+    "settings.noctaliaDetection.label": "Noctalia Highlight",
+    "settings.noctaliaDetection.description": "Highlight when Noctalia components have an update",
+    "settings.cleanupAfterUpdate.label": "Cleanup After Update",
+    "settings.cleanupAfterUpdate.description": "Run system cleanup after installing updates",
+    "settings.cachePreserveList.label": "Cache Preserve List",
+    "settings.cachePreserveList.description": "Space-separated folder names in ~/.cache to preserve during cleanup",
+    "settings.showToasts.label": "Show Toasts",
+    "settings.showToasts.description": "Show notification toasts for refresh events",
+
+    "settings.bar.hideOnEmpty.label": "Hide When Empty",
+    "settings.bar.hideOnEmpty.description": "Hide widget if no updates are available",
+    "settings.bar.boldText.label": "Bold Count",
+    "settings.bar.boldText.description": "Display the update count in bold",
+    "settings.bar.noctaliaHighlight.label": "Noctalia Highlight",
+    "settings.bar.noctaliaHighlight.description": "Highlight when Noctalia has updates"
+}
