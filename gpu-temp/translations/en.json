@@ -1,0 +1,8 @@
+{
+    "settings.sensorPath.label": "Sensor Path",
+    "settings.sensorPath.description": "Custom hwmon temp input path (auto-detect amdgpu if empty)",
+    "settings.warnTemp.label": "Warning Temperature (°C)",
+    "settings.warnTemp.description": "Temperature to show warning color",
+    "settings.critTemp.label": "Critical Temperature (°C)",
+    "settings.critTemp.description": "Temperature to show critical/error color"
+}

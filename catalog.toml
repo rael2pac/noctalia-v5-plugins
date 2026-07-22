@@ -19,3 +19,14 @@ icon = "device-desktop"
 description = "A plugin to manage HDMI monitors via niri"
 plugin_api = 3
 tags = ["Bar", "Desktop", "Panel", "Display"]
+
+[[plugin]]
+id = "rael2pac/gpu-temp"
+name = "GPU Temperature"
+version = "1.0.0"
+author = "rael2pac"
+license = "MIT"
+icon = "thermometer"
+description = "GPU temperature widget - reads directly from amdgpu hwmon sensor"
+plugin_api = 4
+tags = ["Bar", "System", "Temperature"]

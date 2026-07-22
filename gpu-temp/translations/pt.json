@@ -1,0 +1,8 @@
+{
+    "settings.sensorPath.label": "Caminho do Sensor",
+    "settings.sensorPath.description": "Caminho customizado do hwmon (auto-detectar amdgpu se vazio)",
+    "settings.warnTemp.label": "Temperatura de Aviso (°C)",
+    "settings.warnTemp.description": "Temperatura para mostrar cor de aviso",
+    "settings.critTemp.label": "Temperatura Crítica (°C)",
+    "settings.critTemp.description": "Temperatura para mostrar cor de erro"
+}

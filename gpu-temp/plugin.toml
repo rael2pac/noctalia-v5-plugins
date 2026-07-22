@@ -1,0 +1,43 @@
+id           = "rael2pac/gpu-temp"
+name         = "GPU Temperature"
+version      = "1.0.0"
+plugin_api   = 4
+author       = "rael2pac"
+license      = "MIT"
+icon         = "thermometer"
+description  = "GPU temperature widget - reads directly from amdgpu hwmon sensor"
+tags         = ["Bar", "System", "Temperature"]
+
+[[service]]
+id    = "gpu-temp"
+entry = "service.luau"
+
+[[widget]]
+id    = "bar"
+entry = "widget.luau"
+
+  [[widget.setting]]
+  key         = "sensorPath"
+  type        = "string"
+  label_key   = "settings.sensorPath.label"
+  description_key = "settings.sensorPath.description"
+  default     = ""
+  advanced    = true
+
+  [[widget.setting]]
+  key         = "warnTemp"
+  type        = "int"
+  label_key   = "settings.warnTemp.label"
+  description_key = "settings.warnTemp.description"
+  default     = 80
+  min         = 50
+  max         = 100
+
+  [[widget.setting]]
+  key         = "critTemp"
+  type        = "int"
+  label_key   = "settings.critTemp.label"
+  description_key = "settings.critTemp.description"
+  default     = 90
+  min         = 60
+  max         = 110
