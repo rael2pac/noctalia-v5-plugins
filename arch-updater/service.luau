@@ -178,9 +178,6 @@ local function refresh(showToast)
     state.aurStr = ""
     state.flatpakStr = ""
     state.noctaliaUpdate = false
-    state.count = 0
-    state.lastRefreshTime = ""
-    publishState()
 
     pendingToast = (showToast == true)
     if pendingToast then
