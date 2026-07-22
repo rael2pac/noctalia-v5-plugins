@@ -60,7 +60,7 @@ local function render()
         end
     end
 
-    panel.render(ui.column({ flexGrow = 1, gap = 6, padding = 12, fill = "surface" }, {
+    panel.render(ui.column({ flexGrow = 1, gap = 6, padding = 12, fill = "surface", radius = 12 }, {
         -- Title bar (FIXED - outside scroll)
         ui.row({ gap = 10, align = "center" }, {
             ui.glyph({ name = "arrow-big-down-lines", size = 18, color = "primary" }),
