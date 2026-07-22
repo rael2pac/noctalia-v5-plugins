@@ -1,118 +1,64 @@
--- service.luau -- GPU Temperature: enables system monitor + reads amdgpu hwmon
+-- service.luau -- System Monitor Config: enables GPU temp polling + adds widgets to bar
 
-local gpuTemp = nil
-local sensorPath = nil
-local detecting = false
-local configPatched = false
+local patched = false
 
-local function publishState()
-    noctalia.state.set("gpu_temp", gpuTemp)
-    noctalia.state.set("gpu_temp_available", gpuTemp ~= nil)
-end
+local function setupConfig()
+    if patched then return end
+    patched = true
 
-local function patchConfig()
-    if configPatched then return end
-    configPatched = true
-
-    local configPath = noctalia.state.get("config_path") or os.getenv("HOME") .. "/.local/state/noctalia/settings.toml"
+    local home = os.getenv("HOME")
+    local configPath = home .. "/.local/state/noctalia/settings.toml"
 
     local cmd = [[
 CONFIG="]] .. configPath .. [["
+
+# 1. Ensure [system.monitor] with gpu_poll_seconds
 if grep -q '^\[system\.monitor\]' "$CONFIG" 2>/dev/null; then
-    sed -i '/^\[system\.monitor\]/,/^\[/{
-        /^\[system\.monitor\]/!{/^\[/!{
-            s/gpu_poll_seconds = .*/gpu_poll_seconds = 5.0/
-        }
-    }' "$CONFIG"
     if ! grep -q 'gpu_poll_seconds' "$CONFIG"; then
         sed -i '/^\[system\.monitor\]/a gpu_poll_seconds = 5.0' "$CONFIG"
+    else
+        sed -i '/^\[system\.monitor\]/,/^\[/s/gpu_poll_seconds = .*/gpu_poll_seconds = 5.0/' "$CONFIG"
+    fi
+    if ! grep -q 'cpu_poll_seconds' "$CONFIG"; then
+        sed -i '/^\[system\.monitor\]/a cpu_poll_seconds = 2.0' "$CONFIG"
     fi
 else
-    cat >> "$CONFIG" << 'EOF2'
+    printf '\n[system.monitor]\ncpu_poll_seconds = 2.0\ngpu_poll_seconds = 5.0\n' >> "$CONFIG"
+fi
 
-[system.monitor]
-cpu_poll_seconds = 2.0
-gpu_poll_seconds = 5.0
-EOF2
+# 2. Ensure [widget.sysmon] stat = "cpu_temp"
+if ! grep -q '^\[widget\.sysmon\]' "$CONFIG" 2>/dev/null; then
+    printf '\n[widget.sysmon]\nstat = "cpu_temp"\n' >> "$CONFIG"
+fi
+
+# 3. Ensure [widget.temp] stat = "gpu_temp"
+if ! grep -q '^\[widget\.temp\]' "$CONFIG" 2>/dev/null; then
+    printf '\n[widget.temp]\nstat = "gpu_temp"\n' >> "$CONFIG"
+fi
+
+# 4. Add sysmon + temp to bar start if not present
+if grep -q '^start = \[' "$CONFIG" 2>/dev/null; then
+    if ! echo "$(grep '^start = \[' "$CONFIG")" | grep -q '"sysmon"'; then
+        sed -i '/^start = \[/ s/\]/, "sysmon"\]/' "$CONFIG"
+    fi
+    if ! echo "$(grep '^start = \[' "$CONFIG")" | grep -q '"temp"'; then
+        sed -i '/^start = \[/ s/\]/, "temp"\]/' "$CONFIG"
+    fi
 fi
 ]]
+
     noctalia.runAsync(cmd, function(result)
         if result.exitCode == 0 then
-            noctalia.log("gpu-temp: system.monitor config patched")
+            noctalia.log("gpu-temp: system monitor configured successfully")
         else
-            noctalia.log("gpu-temp: failed to patch config: " .. (result.stderr or "unknown"))
+            noctalia.log("gpu-temp: failed to configure: " .. (result.stderr or "unknown"))
         end
     end)
 end
 
-local function readTemp()
-    if not sensorPath then return end
-    noctalia.runAsync("cat " .. sensorPath, function(result)
-        if result.exitCode == 0 and result.stdout then
-            local raw = tonumber(string.match(result.stdout, "%d+"))
-            if raw and raw > 0 then
-                gpuTemp = math.floor(raw / 1000 + 0.5)
-            else
-                gpuTemp = nil
-            end
-        else
-            gpuTemp = nil
-            sensorPath = nil
-        end
-        publishState()
-    end)
-end
-
-local function detectSensor()
-    if detecting then return end
-    detecting = true
-
-    local customPath = noctalia.getConfig("sensorPath")
-    if customPath and customPath ~= "" then
-        sensorPath = customPath
-        detecting = false
-        readTemp()
-        return
-    end
-
-    local cmd = 'for h in /sys/class/hwmon/hwmon*; do '
-        .. 'name="$(cat "$h/name" 2>/dev/null)"; '
-        .. 'if [ "$name" = "amdgpu" ]; then '
-        .. 'for f in "$h"/temp*_input; do '
-        .. '[ -f "$f" ] && echo "$f" && exit 0; '
-        .. 'done; fi; done'
-
-    noctalia.runAsync(cmd, function(result)
-        detecting = false
-        if result.exitCode == 0 and result.stdout then
-            local path = string.match(result.stdout, "[^\n]+")
-            if path then
-                sensorPath = path
-                readTemp()
-                return
-            end
-        end
-        sensorPath = nil
-        gpuTemp = nil
-        publishState()
-    end)
-end
+noctalia.setUpdateInterval(300000)
+setupConfig()
 
 function update()
-    if sensorPath then
-        readTemp()
-    else
-        detectSensor()
-    end
+    setupConfig()
 end
-
-function onConfigChanged()
-    sensorPath = nil
-    gpuTemp = nil
-    publishState()
-    detectSensor()
-end
-
-noctalia.setUpdateInterval(5000)
-patchConfig()
-detectSensor()
