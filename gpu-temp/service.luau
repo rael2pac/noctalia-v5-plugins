@@ -1,12 +1,48 @@
--- service.luau -- GPU Temperature: reads amdgpu hwmon sensor periodically
+-- service.luau -- GPU Temperature: enables system monitor + reads amdgpu hwmon
 
 local gpuTemp = nil
 local sensorPath = nil
 local detecting = false
+local configPatched = false
 
 local function publishState()
     noctalia.state.set("gpu_temp", gpuTemp)
     noctalia.state.set("gpu_temp_available", gpuTemp ~= nil)
+end
+
+local function patchConfig()
+    if configPatched then return end
+    configPatched = true
+
+    local configPath = noctalia.state.get("config_path") or os.getenv("HOME") .. "/.local/state/noctalia/settings.toml"
+
+    local cmd = [[
+CONFIG="]] .. configPath .. [["
+if grep -q '^\[system\.monitor\]' "$CONFIG" 2>/dev/null; then
+    sed -i '/^\[system\.monitor\]/,/^\[/{
+        /^\[system\.monitor\]/!{/^\[/!{
+            s/gpu_poll_seconds = .*/gpu_poll_seconds = 5.0/
+        }
+    }' "$CONFIG"
+    if ! grep -q 'gpu_poll_seconds' "$CONFIG"; then
+        sed -i '/^\[system\.monitor\]/a gpu_poll_seconds = 5.0' "$CONFIG"
+    fi
+else
+    cat >> "$CONFIG" << 'EOF2'
+
+[system.monitor]
+cpu_poll_seconds = 2.0
+gpu_poll_seconds = 5.0
+EOF2
+fi
+]]
+    noctalia.runAsync(cmd, function(result)
+        if result.exitCode == 0 then
+            noctalia.log("gpu-temp: system.monitor config patched")
+        else
+            noctalia.log("gpu-temp: failed to patch config: " .. (result.stderr or "unknown"))
+        end
+    end)
 end
 
 local function readTemp()
@@ -78,4 +114,5 @@ function onConfigChanged()
 end
 
 noctalia.setUpdateInterval(5000)
+patchConfig()
 detectSensor()
