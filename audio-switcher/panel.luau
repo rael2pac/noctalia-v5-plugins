@@ -11,21 +11,21 @@ end
 
 local function getFriendlyName(sinkName)
     if not sinkName then return "?" end
-    if sinkName:match("Corsair") then return "Corsair HS55" end
     if sinkName:match("bluez") then return "Bluetooth" end
     if sinkName:match("hdmi") then return "HDMI" end
     if sinkName:match("iec958") then return "Digital" end
-    if sinkName:match("usb%-") then return "USB" end
+    local brand = sinkName:match("usb%-([^_]+)")
+    if brand then return brand end
     if sinkName:match("analog%-stereo") then return "Analogico" end
     return sinkName:sub(1, 30)
 end
 
 local function getSinkIcon(name)
     if not name then return "speakerphone" end
-    if name:match("Corsair") then return "headphones" end
     if name:match("bluez") then return "bluetooth" end
     if name:match("hdmi") then return "device-desktop" end
     if name:match("iec958") then return "plug" end
+    if name:match("usb") then return "headphones" end
     return "speakerphone"
 end
 
