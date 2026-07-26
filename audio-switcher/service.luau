@@ -1,9 +1,9 @@
--- service.luau -- Audio Switcher: list streams + sinks for per-app routing
+-- service.luau -- Audio Switcher: per-app audio routing
 
 local function parseSinkInputs(text)
     local list = {}
     if not text or text == "" then return list end
-    local currentId, currentName, currentSink = nil, nil, nil
+    local currentId, currentSink, currentName = nil, nil, nil
     for line in text:gmatch("[^\n]*") do
         local id = line:match("^Sink Input #(%d+)")
         if id then
@@ -18,10 +18,10 @@ local function parseSinkInputs(text)
             currentName = nil
             currentSink = nil
         end
-        local app = line:match('application.name = "(.+)"')
-        if app then currentName = app end
         local snk = line:match("^%s+Sink: (%d+)")
-        if snk then currentSink = tonumber(snk) end
+        if snk and currentId then currentSink = tonumber(snk) end
+        local app = line:match('application.name = "(.+)"')
+        if app and currentId then currentName = app end
     end
     if currentId and currentName then
         table.insert(list, {
@@ -49,7 +49,7 @@ local function parseSinks(text)
 end
 
 local function refresh()
-    noctalia.runAsync("pactl list sink-inputs short 2>/dev/null", function(inputResult)
+    noctalia.runAsync("pactl list sink-inputs 2>/dev/null", function(inputResult)
         local streams = {}
         if inputResult.exitCode == 0 and inputResult.stdout and inputResult.stdout ~= "" then
             streams = parseSinkInputs(inputResult.stdout)

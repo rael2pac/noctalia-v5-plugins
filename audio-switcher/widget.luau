@@ -1,4 +1,4 @@
--- widget.luau -- Audio Switcher: bar widget - just an icon to open panel
+-- widget.luau -- Audio Switcher: bar widget
 
 local streamCount = 0
 local loaded = false
@@ -11,20 +11,17 @@ end
 
 local function render()
     if not loaded then
-        barWidget.setVisible(false)
+        barWidget.setVisible(true)
+        barWidget.render(ui.row({ gap = 5, align = "center" }, {
+            ui.glyph({ name = "peaker", size = 16, color = "on_surface" }),
+        }))
         return
     end
 
     barWidget.setVisible(true)
 
-    local label = ""
-    if streamCount > 0 then
-        label = tostring(streamCount)
-    end
-
     barWidget.render(ui.row({ gap = 5, align = "center" }, {
         ui.glyph({ name = "peaker", size = 16, color = "on_surface" }),
-        ui.label({ text = label, fontSize = 13, fontWeight = "bold", color = "on_surface" }),
     }))
 
     barWidget.setTooltip(tr("widget.tooltip", "Roteamento de audio"))
@@ -32,8 +29,8 @@ end
 
 noctalia.state.watch("audio", function(value)
     if value and value ~= "" then
-        local d = noctalia.json.decode(value)
-        if d and d.streams then
+        local ok, d = pcall(noctalia.json.decode, value)
+        if ok and d and d.streams then
             streamCount = #d.streams
         else
             streamCount = 0
