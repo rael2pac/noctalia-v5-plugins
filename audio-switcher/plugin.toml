@@ -1,6 +1,6 @@
 id           = "rael2pac/audio-switcher"
 name         = "Audio Switcher"
-version      = "1.2.3"
+version      = "1.2.4"
 plugin_api   = 3
 author       = "rael2pac"
 license      = "MIT"
