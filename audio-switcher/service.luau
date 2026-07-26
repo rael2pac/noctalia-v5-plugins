@@ -33,7 +33,7 @@ local function parseSinkInputs(text)
     return list
 end
 
-local function parseSinksFull(text)
+local function parseSinksFiltered(text)
     local list = {}
     if not text or text == "" then return list end
     local currentId, currentName, currentDesc = nil, nil, nil
@@ -73,10 +73,10 @@ local function refresh()
             streams = parseSinkInputs(inputResult.stdout)
         end
 
-        noctalia.runAsync("pactl list sinks 2>/dev/null", function(sinkResult)
+        noctalia.runAsync("pactl list sinks 2>/dev/null | grep -E '^(Sink #[0-9]|\\tName:|\\tDescription:)'", function(sinkResult)
             local sinks = {}
             if sinkResult.exitCode == 0 and sinkResult.stdout and sinkResult.stdout ~= "" then
-                sinks = parseSinksFull(sinkResult.stdout)
+                sinks = parseSinksFiltered(sinkResult.stdout)
             end
 
             noctalia.runAsync("pactl get-default-sink 2>/dev/null", function(defaultResult)
