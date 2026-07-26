@@ -25,16 +25,15 @@ local function parseSinkInputs(text)
     return list
 end
 
-local function parseSinksCompact(text)
+local function parseSinksShort(text)
     local list = {}
     if not text or text == "" then return list end
     for line in text:gmatch("[^\n]*") do
-        local id, name, desc = line:match("^(%d+)\t([^\t]+)\t(.+)")
-        if id and name and desc then
+        local id, name = line:match("^(%d+)\t([^\t]+)")
+        if id and name then
             table.insert(list, {
                 id = tonumber(id),
                 name = name,
-                description = desc,
             })
         end
     end
@@ -48,10 +47,10 @@ local function refresh()
             streams = parseSinkInputs(inputResult.stdout)
         end
 
-        noctalia.runAsync([[pactl list sinks 2>/dev/null | awk '/^Sink #/{id=substr($2,2)} /^\tName:/{name=$0; sub(/^\tName: /,"",name)} /^\tDescription:/{desc=$0; sub(/^\tDescription: /,"",desc); print id"\t"name"\t"desc}']], function(sinkResult)
+        noctalia.runAsync("pactl list sinks short 2>/dev/null", function(sinkResult)
             local sinks = {}
             if sinkResult.exitCode == 0 and sinkResult.stdout and sinkResult.stdout ~= "" then
-                sinks = parseSinksCompact(sinkResult.stdout)
+                sinks = parseSinksShort(sinkResult.stdout)
             end
 
             noctalia.runAsync("pactl get-default-sink 2>/dev/null", function(defaultResult)

@@ -9,6 +9,15 @@ local function tr(key, fallback)
     return v
 end
 
+local function getFriendlyName(sinkName)
+    if not sinkName then return "?" end
+    if sinkName:match("bluez") then return "Bluetooth" end
+    if sinkName:match("hdmi") then return "HDMI" end
+    if sinkName:match("iec958") then return "Digital" end
+    if sinkName:match("analog%-stereo") then return "Analogico" end
+    return sinkName:sub(1, 30)
+end
+
 local function getSinkIcon(name)
     if not name then return "speakerphone" end
     if name:match("bluez") then return "bluetooth" end
@@ -105,15 +114,13 @@ function render()
         }))
     else
         for i, stream in ipairs(audioData.streams) do
-            local sinkName = ""
-            local sinkDesc = "?"
+            local sinkLabel = "?"
             local sinkIcon = "speakerphone"
             if audioData.sinks then
                 for _, s in ipairs(audioData.sinks) do
                     if s.id == stream.sink then
-                        sinkName = s.name or ""
-                        sinkDesc = s.description or s.name or "?"
-                        sinkIcon = getSinkIcon(sinkName)
+                        sinkLabel = getFriendlyName(s.name)
+                        sinkIcon = getSinkIcon(s.name)
                         break
                     end
                 end
@@ -127,7 +134,7 @@ function render()
                 }),
                 ui.row({ gap = 4, align = "center" }, {
                     ui.glyph({ name = sinkIcon, size = 12, color = "on_surface/0.5" }),
-                    ui.label({ text = sinkDesc, fontSize = 11, color = "on_surface/0.5", flexGrow = 1 }),
+                    ui.label({ text = sinkLabel, fontSize = 11, color = "on_surface/0.5", flexGrow = 1 }),
                 }),
             }))
 
@@ -138,7 +145,7 @@ function render()
                         local isSelected = (stream.sink == sink.id)
                         local variant = isSelected and "default" or "outline"
                         local icon = getSinkIcon(sink.name)
-                        local label = sink.description or sink.name or "?"
+                        local label = getFriendlyName(sink.name)
                         local cb = "onR_" .. i .. "_" .. j
                         table.insert(sinkButtons, ui.button({
                             text = label,
