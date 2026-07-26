@@ -41,3 +41,14 @@ icon = "database"
 description = "Monitora todos os discos conectados e exibe espaço livre na barra e painel detalhado"
 plugin_api = 3
 tags = ["Bar", "Panel", "System", "Hardware", "Utility"]
+
+[[plugin]]
+id           = "rael2pac/audio-switcher"
+name         = "Audio Switcher"
+version      = "1.0.0"
+author       = "rael2pac"
+license      = "MIT"
+icon         = "volume"
+description  = "Troca a saida de audio rapidamente pela barra ou painel"
+plugin_api   = 3
+tags         = ["Bar", "Panel", "Audio", "System", "Utility"]

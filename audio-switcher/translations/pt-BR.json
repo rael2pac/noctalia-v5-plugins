@@ -1,0 +1,11 @@
+{
+    "panel.title": "Audio Switcher",
+    "panel.noSinks": "Nenhuma saida de audio encontrada",
+    "panel.selectSink": "Saida de audio:",
+    "panel.volume": "Volume",
+    "widget.tooltip": "Saida: ",
+    "settings.showPercent.label": "Mostrar Percentual",
+    "settings.showPercent.description": "Mostrar volume em percentual na barra",
+    "settings.refreshInterval.label": "Intervalo de Atualizacao",
+    "settings.refreshInterval.description": "Frequencia de verificacao do audio (segundos)"
+}
