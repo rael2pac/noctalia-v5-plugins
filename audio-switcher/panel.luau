@@ -2,7 +2,6 @@
 
 local audioData = nil
 local panelOpen = false
-local routeCallbacks = {}
 
 local function tr(key, fallback)
     local v = noctalia.tr(key)
@@ -10,20 +9,12 @@ local function tr(key, fallback)
     return v
 end
 
-local function getSinkDisplayName(sinkName)
+local function getSinkLabel(sinkName)
     if not sinkName then return "?" end
-    if sinkName:match("bluez") then
-        return "Bluetooth"
-    end
-    if sinkName:match("hdmi") then
-        return "HDMI"
-    end
-    if sinkName:match("iec958") then
-        return "Digital"
-    end
-    if sinkName:match("Corsair") or sinkName:match("corsair") or sinkName:match("USB") then
-        return "Corsair HS55"
-    end
+    if sinkName:match("bluez") then return "Bluetooth" end
+    if sinkName:match("hdmi") then return "HDMI" end
+    if sinkName:match("iec958") then return "Digital" end
+    if sinkName:match("analog") then return "Analogico" end
     local name = sinkName
     name = name:gsub("alsa_output%.", "")
     name = name:gsub("bluez_output%.", "")
@@ -55,40 +46,85 @@ local function getStreamIcon(appName)
     return "app-window"
 end
 
-local function findSinkName(sinkId)
+local function findSinkNameById(sinkId)
     if not audioData or not audioData.sinks then return "?" end
     for _, s in ipairs(audioData.sinks) do
-        if s.id == sinkId then
-            return getSinkDisplayName(s.name)
-        end
+        if s.id == sinkId then return getSinkLabel(s.name) end
     end
     return "?"
 end
 
-local function findSinkIcon(sinkId)
+local function findSinkIconById(sinkId)
     if not audioData or not audioData.sinks then return "speakerphone" end
     for _, s in ipairs(audioData.sinks) do
-        if s.id == sinkId then
-            return getSinkIcon(s.name)
-        end
+        if s.id == sinkId then return getSinkIcon(s.name) end
     end
     return "speakerphone"
 end
 
-local function routeStream(streamIdx, sinkIdx)
-    if not audioData or not audioData.streams or not audioData.sinks then return end
-    local stream = audioData.streams[streamIdx]
-    local sink = audioData.sinks[sinkIdx]
-    if not stream or not sink then return end
-    noctalia.runAsync("pactl move-sink-input " .. tostring(stream.id) .. " " .. tostring(sink.id) .. " 2>/dev/null", function()
-        stream.sink = sink.id
-        render()
+local function doMoveSinkInput(streamId, sinkId)
+    noctalia.runAsync("pactl move-sink-input " .. tostring(streamId) .. " " .. tostring(sinkId), function()
+        noctalia.runAsync("pactl list sink-inputs 2>/dev/null", function(result)
+            if result.exitCode == 0 and result.stdout then
+                refreshStreams(result.stdout)
+            end
+            render()
+        end)
     end)
+end
+
+local function refreshStreams(text)
+    if not audioData then return end
+    local newStreams = {}
+    if text and text ~= "" then
+        local currentId, currentSink, currentName = nil, nil, nil
+        for line in text:gmatch("[^\n]*") do
+            local id = line:match("^Sink Input #(%d+)")
+            if id then
+                if currentId and currentName then
+                    table.insert(newStreams, {
+                        id = currentId,
+                        name = currentName,
+                        sink = currentSink or 0,
+                    })
+                end
+                currentId = tonumber(id)
+                currentName = nil
+                currentSink = nil
+            end
+            local snk = line:match("^%s+Sink: (%d+)")
+            if snk and currentId then currentSink = tonumber(snk) end
+            local app = line:match('application.name = "(.+)"')
+            if app and currentId then currentName = app end
+        end
+        if currentId and currentName then
+            table.insert(newStreams, {
+                id = currentId,
+                name = currentName,
+                sink = currentSink or 0,
+            })
+        end
+    end
+    audioData.streams = newStreams
+end
+
+-- Generate route callbacks: onR_ST_SK (stream 1-8, sink 1-5)
+for si = 1, 8 do
+    for sk = 1, 5 do
+        local streamIdx = si
+        local sinkIdx = sk
+        _G["onR_" .. si .. "_" .. sk] = function()
+            if not audioData or not audioData.streams or not audioData.sinks then return end
+            local stream = audioData.streams[streamIdx]
+            local sink = audioData.sinks[sinkIdx]
+            if not stream or not sink then return end
+            doMoveSinkInput(stream.id, sink.id)
+        end
+    end
 end
 
 function render()
     local body = {}
-    routeCallbacks = {}
 
     if not audioData or not audioData.streams or #audioData.streams == 0 then
         table.insert(body, ui.column({ align = "center", justify = "center", flexGrow = 1, padding = 30 }, {
@@ -97,8 +133,8 @@ function render()
         }))
     else
         for i, stream in ipairs(audioData.streams) do
-            local sinkName = findSinkName(stream.sink)
-            local sinkIcon = findSinkIcon(stream.sink)
+            local sinkName = findSinkNameById(stream.sink)
+            local sinkIcon = findSinkIconById(stream.sink)
             local appIcon = getStreamIcon(stream.name)
 
             table.insert(body, ui.column({ gap = 3, paddingH = 8, paddingV = 6, fill = "surface_variant", radius = 8 }, {
@@ -117,15 +153,14 @@ function render()
                     local isSelected = (stream.sink == sink.id)
                     local variant = isSelected and "default" or "outline"
                     local icon = getSinkIcon(sink.name)
-                    local label = getSinkDisplayName(sink.name)
-                    local cbKey = "route_" .. i .. "_" .. j
-                    routeCallbacks[cbKey] = { streamIdx = i, sinkIdx = j }
+                    local label = getSinkLabel(sink.name)
+                    local cb = "onR_" .. i .. "_" .. j
                     table.insert(sinkButtons, ui.button({
                         text = label,
                         glyph = icon,
                         variant = variant,
                         controlSize = "sm",
-                        onClick = cbKey,
+                        onClick = cb,
                     }))
                 end
                 table.insert(body, ui.row({ gap = 4, wrap = true, paddingH = 8, paddingV = 2 }, sinkButtons))
@@ -144,13 +179,6 @@ function render()
     }))
 end
 
-function onRouteClick(key)
-    local cb = routeCallbacks[key]
-    if cb then
-        routeStream(cb.streamIdx, cb.sinkIdx)
-    end
-end
-
 function onOpen(_context)
     panelOpen = true
     local raw = noctalia.state.get("audio")
@@ -166,7 +194,6 @@ end
 function onClose()
     panelOpen = false
     audioData = nil
-    routeCallbacks = {}
 end
 
 function onCloseClicked()
