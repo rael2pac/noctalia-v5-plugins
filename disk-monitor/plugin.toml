@@ -1,10 +1,10 @@
 id           = "rael2pac/disk-monitor"
 name         = "Monitor de Discos"
 version      = "1.0.0"
-plugin_api   = 4
+plugin_api   = 3
 author       = "rael2pac"
 license      = "MIT"
-icon         = "hard-drive"
+icon         = "database"
 description  = "Monitora todos os discos conectados e exibe espaço livre na barra e painel detalhado"
 tags         = ["Bar", "Panel", "System", "Hardware", "Utility"]
 
@@ -15,13 +15,6 @@ entry = "service.luau"
 [[widget]]
 id    = "bar"
 entry = "widget.luau"
-
-  [[widget.setting]]
-  key         = "displayDisk"
-  type        = "string"
-  label_key   = "settings.displayDisk.label"
-  description_key = "settings.displayDisk.description"
-  default     = "/"
 
   [[widget.setting]]
   key         = "displayFormat"
