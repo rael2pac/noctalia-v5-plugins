@@ -14,10 +14,13 @@ local function getFriendlyName(sinkName)
     if sinkName:match("bluez") then return "Bluetooth" end
     if sinkName:match("hdmi") then return "HDMI" end
     if sinkName:match("iec958") then return "Digital" end
-    local brand, model = sinkName:match("usb%-([^_]+)_([^_]+)")
-    if brand and model then return brand .. " " .. model end
-    local brandOnly = sinkName:match("usb%-([^_]+)")
-    if brandOnly then return brandOnly end
+    local brand = sinkName:match("usb%-([^_]+)")
+    if brand then
+        local upper = brand:upper()
+        local model = sinkName:match("usb%-" .. brand .. "_" .. upper .. "_([^_]+)")
+        if model then return brand .. " " .. model end
+        return brand
+    end
     if sinkName:match("analog%-stereo") then return "Analogico" end
     return sinkName:sub(1, 30)
 end
