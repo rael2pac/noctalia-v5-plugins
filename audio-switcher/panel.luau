@@ -14,7 +14,9 @@ local function getFriendlyName(sinkName)
     if sinkName:match("bluez") then return "Bluetooth" end
     if sinkName:match("hdmi") then return "HDMI" end
     if sinkName:match("iec958") then return "Digital" end
+    if sinkName:match("Corsair") then return "Corsair HS55" end
     if sinkName:match("analog%-stereo") then return "Analogico" end
+    if sinkName:match("usb%-") then return "USB" end
     return sinkName:sub(1, 30)
 end
 
