@@ -29,7 +29,7 @@ local function getSinkIcon(name)
     if not name then return "speakerphone" end
     if name:match("bluez") then return "bluetooth" end
     if name:match("hdmi") then return "device-desktop" end
-    if name:match("iec958") then return "plug" end
+    if name:match("iec958") then return "volume" end
     if name:match("usb") then return "headphones" end
     return "speakerphone"
 end
