@@ -45,10 +45,10 @@ tags = ["Bar", "Panel", "System", "Hardware", "Utility"]
 [[plugin]]
 id           = "rael2pac/audio-switcher"
 name         = "Audio Switcher"
-version      = "1.0.0"
+version      = "1.2.6"
 author       = "rael2pac"
 license      = "MIT"
-icon         = "volume"
-description  = "Troca a saida de audio rapidamente pela barra ou painel"
+icon         = "speakerphone"
+description  = "Roteia apps individualmente para saidas de audio diferentes"
 plugin_api   = 3
 tags         = ["Bar", "Panel", "Audio", "System", "Utility"]
