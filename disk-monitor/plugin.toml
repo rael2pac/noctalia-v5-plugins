@@ -1,0 +1,55 @@
+id           = "rael2pac/disk-monitor"
+name         = "Monitor de Discos"
+version      = "1.0.0"
+plugin_api   = 4
+author       = "rael2pac"
+license      = "MIT"
+icon         = "hard-drive"
+description  = "Monitora todos os discos conectados e exibe espaço livre na barra e painel detalhado"
+tags         = ["Bar", "Panel", "System", "Hardware", "Utility"]
+
+[[service]]
+id    = "disk-poller"
+entry = "service.luau"
+
+[[widget]]
+id    = "bar"
+entry = "widget.luau"
+
+  [[widget.setting]]
+  key         = "displayDisk"
+  type        = "string"
+  label_key   = "settings.displayDisk.label"
+  description_key = "settings.displayDisk.description"
+  default     = "/"
+
+  [[widget.setting]]
+  key         = "displayFormat"
+  type        = "string"
+  label_key   = "settings.displayFormat.label"
+  description_key = "settings.displayFormat.description"
+  default     = "name_free"
+
+  [[widget.setting]]
+  key         = "hideOnEmpty"
+  type        = "bool"
+  label_key   = "settings.hideOnEmpty.label"
+  description_key = "settings.hideOnEmpty.description"
+  default     = false
+
+[[panel]]
+id          = "panel"
+entry       = "panel.luau"
+width       = 500
+height      = 350
+placement   = "attached"
+open_near_click = false
+
+[[setting]]
+key         = "refreshInterval"
+type        = "int"
+label_key   = "settings.refreshInterval.label"
+description_key = "settings.refreshInterval.description"
+default     = 30
+min         = 10
+max         = 300

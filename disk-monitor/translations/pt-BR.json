@@ -1,0 +1,19 @@
+{
+    "panel.title": "Monitor de Discos",
+    "panel.device": "Dispositivo",
+    "panel.total": "Total",
+    "panel.used": "Usado",
+    "panel.free": "Livre",
+    "panel.usage": "Uso",
+    "panel.noDisks": "Nenhum disco detectado",
+    "widget.noDisk": "Sem dados",
+
+    "settings.displayDisk.label": "Disco na Barra",
+    "settings.displayDisk.description": "Mountpoint do disco para exibir na barra (ex: /, /home)",
+    "settings.displayFormat.label": "Formato de Exibição",
+    "settings.displayFormat.description": "Como mostrar o espaço: name_free, free_only, percent, name_percent",
+    "settings.hideOnEmpty.label": "Ocultar Se Vazio",
+    "settings.hideOnEmpty.description": "Ocultar widget quando não houver dados do disco",
+    "settings.refreshInterval.label": "Intervalo de Atualização",
+    "settings.refreshInterval.description": "Frequência de verificação dos discos (segundos)"
+}

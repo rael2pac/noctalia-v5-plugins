@@ -30,3 +30,14 @@ icon = "thermometer"
 description = "GPU temperature widget - reads directly from amdgpu hwmon sensor"
 plugin_api = 4
 tags = ["Bar", "System", "Temperature"]
+
+[[plugin]]
+id = "rael2pac/disk-monitor"
+name = "Monitor de Discos"
+version = "1.0.0"
+author = "rael2pac"
+license = "MIT"
+icon = "hard-drive"
+description = "Monitora todos os discos conectados e exibe espaço livre na barra e painel detalhado"
+plugin_api = 4
+tags = ["Bar", "Panel", "System", "Hardware", "Utility"]
