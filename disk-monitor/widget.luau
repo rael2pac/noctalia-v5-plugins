@@ -73,7 +73,7 @@ local function render()
         else
             barWidget.setVisible(true)
             barWidget.render(ui.row({ gap = 5, align = "center" }, {
-                ui.glyph({ name = "database", size = 18, color = "on_surface_variant" }),
+                ui.glyph({ name = "database", size = 16, color = "on_surface_variant" }),
                 ui.label({ text = tr("widget.noDisk", "Sem dados"), fontSize = 13, color = "on_surface/0.6" }),
             }))
         end
@@ -99,7 +99,7 @@ local function render()
     end
 
     barWidget.render(ui.row({ gap = 5, align = "center" }, {
-        ui.glyph({ name = icon, size = 18, color = "on_surface" }),
+        ui.glyph({ name = icon, size = 16, color = "on_surface" }),
         ui.label({ text = text, fontSize = 13, fontWeight = "bold", color = "on_surface" }),
     }))
 
