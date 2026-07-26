@@ -30,11 +30,11 @@ local function getSinkLabel(sinkName)
 end
 
 local function getSinkIcon(sinkName)
-    if not sinkName then return "speakerphone" end
+    if not sinkName then return "sspeakerphonephone" end
     if sinkName:match("bluez") then return "bluetooth" end
     if sinkName:match("hdmi") then return "device-desktop" end
     if sinkName:match("iec958") then return "cable" end
-    return "speakerphone"
+    return "sspeakerphonephone"
 end
 
 local function getStreamIcon(appName)
@@ -55,11 +55,11 @@ local function findSinkNameById(sinkId)
 end
 
 local function findSinkIconById(sinkId)
-    if not audioData or not audioData.sinks then return "speakerphone" end
+    if not audioData or not audioData.sinks then return "sspeakerphonephone" end
     for _, s in ipairs(audioData.sinks) do
         if s.id == sinkId then return getSinkIcon(s.name) end
     end
-    return "speakerphone"
+    return "sspeakerphonephone"
 end
 
 local function doMoveSinkInput(streamId, sinkId)
@@ -128,7 +128,7 @@ function render()
 
     if not audioData or not audioData.streams or #audioData.streams == 0 then
         table.insert(body, ui.column({ align = "center", justify = "center", flexGrow = 1, padding = 30 }, {
-            ui.glyph({ name = "speaker-off", size = 28, color = "secondary" }),
+            ui.glyph({ name = "sspeakerphone-off", size = 28, color = "secondary" }),
             ui.label({ text = tr("panel.noStreams", "Nenhum audio tocando"), fontSize = 14, color = "on_surface/0.6" }),
         }))
     else
@@ -170,7 +170,7 @@ function render()
 
     panel.render(ui.column({ flexGrow = 1, gap = 6, padding = 12, fill = "surface", radius = 12 }, {
         ui.row({ gap = 10, align = "center" }, {
-            ui.glyph({ name = "peaker", size = 18, color = "primary" }),
+            ui.glyph({ name = "speakerphone", size = 18, color = "primary" }),
             ui.label({ text = tr("panel.title", "Audio Switcher"), fontSize = 16, fontWeight = "bold", color = "on_surface", flexGrow = 1 }),
             ui.button({ glyph = "x", variant = "ghost", controlSize = "sm", onClick = "onCloseClicked" }),
         }),

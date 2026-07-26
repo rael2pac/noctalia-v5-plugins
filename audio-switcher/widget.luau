@@ -13,7 +13,7 @@ local function render()
     if not loaded then
         barWidget.setVisible(true)
         barWidget.render(ui.row({ gap = 5, align = "center" }, {
-            ui.glyph({ name = "peaker", size = 16, color = "on_surface" }),
+            ui.glyph({ name = "speakerphone", size = 16, color = "on_surface" }),
         }))
         return
     end
@@ -21,7 +21,7 @@ local function render()
     barWidget.setVisible(true)
 
     barWidget.render(ui.row({ gap = 5, align = "center" }, {
-        ui.glyph({ name = "peaker", size = 16, color = "on_surface" }),
+        ui.glyph({ name = "speakerphone", size = 16, color = "on_surface" }),
     }))
 
     barWidget.setTooltip(tr("widget.tooltip", "Roteamento de audio"))
