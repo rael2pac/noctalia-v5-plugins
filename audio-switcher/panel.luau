@@ -30,11 +30,11 @@ local function getSinkLabel(sinkName)
 end
 
 local function getSinkIcon(sinkName)
-    if not sinkName then return "sspeakerphonephone" end
+    if not sinkName then return "speakerphone" end
     if sinkName:match("bluez") then return "bluetooth" end
     if sinkName:match("hdmi") then return "device-desktop" end
     if sinkName:match("iec958") then return "cable" end
-    return "sspeakerphonephone"
+    return "speakerphone"
 end
 
 local function getStreamIcon(appName)
@@ -55,80 +55,87 @@ local function findSinkNameById(sinkId)
 end
 
 local function findSinkIconById(sinkId)
-    if not audioData or not audioData.sinks then return "sspeakerphonephone" end
+    if not audioData or not audioData.sinks then return "speakerphone" end
     for _, s in ipairs(audioData.sinks) do
         if s.id == sinkId then return getSinkIcon(s.name) end
     end
-    return "sspeakerphonephone"
+    return "speakerphone"
 end
 
 local function doMoveSinkInput(streamId, sinkId)
     noctalia.runAsync("pactl move-sink-input " .. tostring(streamId) .. " " .. tostring(sinkId), function()
         noctalia.runAsync("pactl list sink-inputs 2>/dev/null", function(result)
             if result.exitCode == 0 and result.stdout then
-                refreshStreams(result.stdout)
+                local newStreams = {}
+                local currentId, currentSink, currentName = nil, nil, nil
+                for line in result.stdout:gmatch("[^\n]*") do
+                    local id = line:match("^Sink Input #(%d+)")
+                    if id then
+                        if currentId and currentName then
+                            table.insert(newStreams, { id = currentId, name = currentName, sink = currentSink or 0 })
+                        end
+                        currentId = tonumber(id)
+                        currentName = nil
+                        currentSink = nil
+                    end
+                    local snk = line:match("^%s+Sink: (%d+)")
+                    if snk and currentId then currentSink = tonumber(snk) end
+                    local app = line:match('application.name = "(.+)"')
+                    if app and currentId then currentName = app end
+                end
+                if currentId and currentName then
+                    table.insert(newStreams, { id = currentId, name = currentName, sink = currentSink or 0 })
+                end
+                if audioData then audioData.streams = newStreams end
             end
             render()
         end)
     end)
 end
 
-local function refreshStreams(text)
-    if not audioData then return end
-    local newStreams = {}
-    if text and text ~= "" then
-        local currentId, currentSink, currentName = nil, nil, nil
-        for line in text:gmatch("[^\n]*") do
-            local id = line:match("^Sink Input #(%d+)")
-            if id then
-                if currentId and currentName then
-                    table.insert(newStreams, {
-                        id = currentId,
-                        name = currentName,
-                        sink = currentSink or 0,
-                    })
-                end
-                currentId = tonumber(id)
-                currentName = nil
-                currentSink = nil
-            end
-            local snk = line:match("^%s+Sink: (%d+)")
-            if snk and currentId then currentSink = tonumber(snk) end
-            local app = line:match('application.name = "(.+)"')
-            if app and currentId then currentName = app end
-        end
-        if currentId and currentName then
-            table.insert(newStreams, {
-                id = currentId,
-                name = currentName,
-                sink = currentSink or 0,
-            })
-        end
-    end
-    audioData.streams = newStreams
-end
+-- Explicit route callbacks: stream 1-8, sink 1-5
+function onR_1_1() if audioData and audioData.streams[1] and audioData.sinks[1] then doMoveSinkInput(audioData.streams[1].id, audioData.sinks[1].id) end end
+function onR_1_2() if audioData and audioData.streams[1] and audioData.sinks[2] then doMoveSinkInput(audioData.streams[1].id, audioData.sinks[2].id) end end
+function onR_1_3() if audioData and audioData.streams[1] and audioData.sinks[3] then doMoveSinkInput(audioData.streams[1].id, audioData.sinks[3].id) end end
+function onR_1_4() if audioData and audioData.streams[1] and audioData.sinks[4] then doMoveSinkInput(audioData.streams[1].id, audioData.sinks[4].id) end end
+function onR_1_5() if audioData and audioData.streams[1] and audioData.sinks[5] then doMoveSinkInput(audioData.streams[1].id, audioData.sinks[5].id) end end
 
--- Generate route callbacks: onR_ST_SK (stream 1-8, sink 1-5)
-for si = 1, 8 do
-    for sk = 1, 5 do
-        local streamIdx = si
-        local sinkIdx = sk
-        _G["onR_" .. si .. "_" .. sk] = function()
-            if not audioData or not audioData.streams or not audioData.sinks then return end
-            local stream = audioData.streams[streamIdx]
-            local sink = audioData.sinks[sinkIdx]
-            if not stream or not sink then return end
-            doMoveSinkInput(stream.id, sink.id)
-        end
-    end
-end
+function onR_2_1() if audioData and audioData.streams[2] and audioData.sinks[1] then doMoveSinkInput(audioData.streams[2].id, audioData.sinks[1].id) end end
+function onR_2_2() if audioData and audioData.streams[2] and audioData.sinks[2] then doMoveSinkInput(audioData.streams[2].id, audioData.sinks[2].id) end end
+function onR_2_3() if audioData and audioData.streams[2] and audioData.sinks[3] then doMoveSinkInput(audioData.streams[2].id, audioData.sinks[3].id) end end
+function onR_2_4() if audioData and audioData.streams[2] and audioData.sinks[4] then doMoveSinkInput(audioData.streams[2].id, audioData.sinks[4].id) end end
+function onR_2_5() if audioData and audioData.streams[2] and audioData.sinks[5] then doMoveSinkInput(audioData.streams[2].id, audioData.sinks[5].id) end end
+
+function onR_3_1() if audioData and audioData.streams[3] and audioData.sinks[1] then doMoveSinkInput(audioData.streams[3].id, audioData.sinks[1].id) end end
+function onR_3_2() if audioData and audioData.streams[3] and audioData.sinks[2] then doMoveSinkInput(audioData.streams[3].id, audioData.sinks[2].id) end end
+function onR_3_3() if audioData and audioData.streams[3] and audioData.sinks[3] then doMoveSinkInput(audioData.streams[3].id, audioData.sinks[3].id) end end
+function onR_3_4() if audioData and audioData.streams[3] and audioData.sinks[4] then doMoveSinkInput(audioData.streams[3].id, audioData.sinks[4].id) end end
+function onR_3_5() if audioData and audioData.streams[3] and audioData.sinks[5] then doMoveSinkInput(audioData.streams[3].id, audioData.sinks[5].id) end end
+
+function onR_4_1() if audioData and audioData.streams[4] and audioData.sinks[1] then doMoveSinkInput(audioData.streams[4].id, audioData.sinks[1].id) end end
+function onR_4_2() if audioData and audioData.streams[4] and audioData.sinks[2] then doMoveSinkInput(audioData.streams[4].id, audioData.sinks[2].id) end end
+function onR_4_3() if audioData and audioData.streams[4] and audioData.sinks[3] then doMoveSinkInput(audioData.streams[4].id, audioData.sinks[3].id) end end
+function onR_4_4() if audioData and audioData.streams[4] and audioData.sinks[4] then doMoveSinkInput(audioData.streams[4].id, audioData.sinks[4].id) end end
+function onR_4_5() if audioData and audioData.streams[4] and audioData.sinks[5] then doMoveSinkInput(audioData.streams[4].id, audioData.sinks[5].id) end end
+
+function onR_5_1() if audioData and audioData.streams[5] and audioData.sinks[1] then doMoveSinkInput(audioData.streams[5].id, audioData.sinks[1].id) end end
+function onR_5_2() if audioData and audioData.streams[5] and audioData.sinks[2] then doMoveSinkInput(audioData.streams[5].id, audioData.sinks[2].id) end end
+function onR_5_3() if audioData and audioData.streams[5] and audioData.sinks[3] then doMoveSinkInput(audioData.streams[5].id, audioData.sinks[3].id) end end
+function onR_5_4() if audioData and audioData.streams[5] and audioData.sinks[4] then doMoveSinkInput(audioData.streams[5].id, audioData.sinks[4].id) end end
+function onR_5_5() if audioData and audioData.streams[5] and audioData.sinks[5] then doMoveSinkInput(audioData.streams[5].id, audioData.sinks[5].id) end end
+
+function onR_6_1() if audioData and audioData.streams[6] and audioData.sinks[1] then doMoveSinkInput(audioData.streams[6].id, audioData.sinks[1].id) end end
+function onR_6_2() if audioData and audioData.streams[6] and audioData.sinks[2] then doMoveSinkInput(audioData.streams[6].id, audioData.sinks[2].id) end end
+function onR_6_3() if audioData and audioData.streams[6] and audioData.sinks[3] then doMoveSinkInput(audioData.streams[6].id, audioData.sinks[3].id) end end
+function onR_6_4() if audioData and audioData.streams[6] and audioData.sinks[4] then doMoveSinkInput(audioData.streams[6].id, audioData.sinks[4].id) end end
+function onR_6_5() if audioData and audioData.streams[6] and audioData.sinks[5] then doMoveSinkInput(audioData.streams[6].id, audioData.sinks[5].id) end end
 
 function render()
     local body = {}
 
     if not audioData or not audioData.streams or #audioData.streams == 0 then
         table.insert(body, ui.column({ align = "center", justify = "center", flexGrow = 1, padding = 30 }, {
-            ui.glyph({ name = "sspeakerphone-off", size = 28, color = "secondary" }),
+            ui.glyph({ name = "speaker-off", size = 28, color = "secondary" }),
             ui.label({ text = tr("panel.noStreams", "Nenhum audio tocando"), fontSize = 14, color = "on_surface/0.6" }),
         }))
     else
@@ -150,18 +157,20 @@ function render()
             if audioData.sinks then
                 local sinkButtons = {}
                 for j, sink in ipairs(audioData.sinks) do
-                    local isSelected = (stream.sink == sink.id)
-                    local variant = isSelected and "default" or "outline"
-                    local icon = getSinkIcon(sink.name)
-                    local label = getSinkLabel(sink.name)
-                    local cb = "onR_" .. i .. "_" .. j
-                    table.insert(sinkButtons, ui.button({
-                        text = label,
-                        glyph = icon,
-                        variant = variant,
-                        controlSize = "sm",
-                        onClick = cb,
-                    }))
+                    if j <= 5 then
+                        local isSelected = (stream.sink == sink.id)
+                        local variant = isSelected and "default" or "outline"
+                        local icon = getSinkIcon(sink.name)
+                        local label = getSinkLabel(sink.name)
+                        local cb = "onR_" .. i .. "_" .. j
+                        table.insert(sinkButtons, ui.button({
+                            text = label,
+                            glyph = icon,
+                            variant = variant,
+                            controlSize = "sm",
+                            onClick = cb,
+                        }))
+                    end
                 end
                 table.insert(body, ui.row({ gap = 4, wrap = true, paddingH = 8, paddingV = 2 }, sinkButtons))
             end
