@@ -9,18 +9,11 @@ local function tr(key, fallback)
     return v
 end
 
-local function getSinkLabel(sink)
-    if not sink then return "?" end
-    if sink.description then return sink.description end
-    return getSinkLabel({name = sink.name})
-end
-
-local function getSinkIcon(sink)
-    if not sink then return "speakerphone" end
-    local n = sink.name or ""
-    if n:match("bluez") then return "bluetooth" end
-    if n:match("hdmi") then return "device-desktop" end
-    if n:match("iec958") then return "cable" end
+local function getSinkIcon(name)
+    if not name then return "speakerphone" end
+    if name:match("bluez") then return "bluetooth" end
+    if name:match("hdmi") then return "device-desktop" end
+    if name:match("iec958") then return "cable" end
     return "speakerphone"
 end
 
@@ -35,37 +28,29 @@ local function getStreamIcon(appName)
     return "app-window"
 end
 
-local function findSinkById(sinkId)
-    if not audioData or not audioData.sinks then return nil end
-    for _, s in ipairs(audioData.sinks) do
-        if s.id == sinkId then return s end
-    end
-    return nil
-end
-
 local function doMoveSinkInput(streamId, sinkId)
     noctalia.runAsync("pactl move-sink-input " .. tostring(streamId) .. " " .. tostring(sinkId), function()
         noctalia.runAsync("pactl list sink-inputs 2>/dev/null", function(result)
             if result.exitCode == 0 and result.stdout then
                 local newStreams = {}
-                local currentId, currentSink, currentName = nil, nil, nil
+                local curId, curSink, curName = nil, nil, nil
                 for line in result.stdout:gmatch("[^\n]*") do
                     local id = line:match("^Sink Input #(%d+)")
                     if id then
-                        if currentId and currentName then
-                            table.insert(newStreams, { id = currentId, name = currentName, sink = currentSink or 0 })
+                        if curId and curName then
+                            table.insert(newStreams, { id = curId, name = curName, sink = curSink or 0 })
                         end
-                        currentId = tonumber(id)
-                        currentName = nil
-                        currentSink = nil
+                        curId = tonumber(id)
+                        curName = nil
+                        curSink = nil
                     end
                     local snk = line:match("^%s+Sink: (%d+)")
-                    if snk and currentId then currentSink = tonumber(snk) end
+                    if snk and curId then curSink = tonumber(snk) end
                     local app = line:match('application.name = "(.+)"')
-                    if app and currentId then currentName = app end
+                    if app and curId then curName = app end
                 end
-                if currentId and currentName then
-                    table.insert(newStreams, { id = currentId, name = currentName, sink = currentSink or 0 })
+                if curId and curName then
+                    table.insert(newStreams, { id = curId, name = curName, sink = curSink or 0 })
                 end
                 if audioData then audioData.streams = newStreams end
             end
@@ -74,7 +59,6 @@ local function doMoveSinkInput(streamId, sinkId)
     end)
 end
 
--- Explicit route callbacks: stream 1-8, sink 1-5
 function onR_1_1() if audioData and audioData.streams[1] and audioData.sinks[1] then doMoveSinkInput(audioData.streams[1].id, audioData.sinks[1].id) end end
 function onR_1_2() if audioData and audioData.streams[1] and audioData.sinks[2] then doMoveSinkInput(audioData.streams[1].id, audioData.sinks[2].id) end end
 function onR_1_3() if audioData and audioData.streams[1] and audioData.sinks[3] then doMoveSinkInput(audioData.streams[1].id, audioData.sinks[3].id) end end
@@ -121,21 +105,29 @@ function render()
         }))
     else
         for i, stream in ipairs(audioData.streams) do
-            local currentSink = findSinkById(stream.sink)
-            local sinkLabel = currentSink and currentSink.description or "?"
-            local sinkIcon = currentSink and getSinkIcon(currentSink) or "speakerphone"
+            local sinkName = ""
+            local sinkDesc = "?"
+            local sinkIcon = "speakerphone"
+            if audioData.sinks then
+                for _, s in ipairs(audioData.sinks) do
+                    if s.id == stream.sink then
+                        sinkName = s.name or ""
+                        sinkDesc = s.description or s.name or "?"
+                        sinkIcon = getSinkIcon(sinkName)
+                        break
+                    end
+                end
+            end
             local appIcon = getStreamIcon(stream.name)
 
             table.insert(body, ui.column({ gap = 4, paddingH = 8, paddingV = 8, fill = "surface_variant", radius = 8 }, {
                 ui.row({ gap = 8, align = "center" }, {
                     ui.glyph({ name = appIcon, size = 18, color = "primary" }),
-                    ui.column({ gap = 1, flexGrow = 1 }, {
-                        ui.label({ text = stream.name, fontSize = 14, fontWeight = "bold", color = "on_surface" }),
-                        ui.row({ gap = 4, align = "center" }, {
-                            ui.glyph({ name = sinkIcon, size = 12, color = "on_surface/0.5" }),
-                            ui.label({ text = sinkLabel, fontSize = 11, color = "on_surface/0.5" }),
-                        }),
-                    }),
+                    ui.label({ text = stream.name, fontSize = 14, fontWeight = "bold", color = "on_surface", flexGrow = 1 }),
+                }),
+                ui.row({ gap = 4, align = "center" }, {
+                    ui.glyph({ name = sinkIcon, size = 12, color = "on_surface/0.5" }),
+                    ui.label({ text = sinkDesc, fontSize = 11, color = "on_surface/0.5", flexGrow = 1 }),
                 }),
             }))
 
@@ -145,8 +137,8 @@ function render()
                     if j <= 5 then
                         local isSelected = (stream.sink == sink.id)
                         local variant = isSelected and "default" or "outline"
-                        local icon = getSinkIcon(sink)
-                        local label = getSinkLabel(sink)
+                        local icon = getSinkIcon(sink.name)
+                        local label = sink.description or sink.name or "?"
                         local cb = "onR_" .. i .. "_" .. j
                         table.insert(sinkButtons, ui.button({
                             text = label,
@@ -157,10 +149,12 @@ function render()
                         }))
                     end
                 end
-                table.insert(body, ui.column({ gap = 4, paddingH = 8, paddingV = 2 }, {
+                table.insert(body, ui.column({ gap = 4, paddingH = 8 }, {
                     ui.row({ gap = 4, wrap = true }, sinkButtons),
                 }))
             end
+
+            table.insert(body, ui.separator({ padding = 0 }))
         end
     end
 
@@ -170,7 +164,6 @@ function render()
             ui.label({ text = tr("panel.title", "Audio Switcher"), fontSize = 16, fontWeight = "bold", color = "on_surface", flexGrow = 1 }),
             ui.button({ glyph = "x", variant = "ghost", controlSize = "sm", onClick = "onCloseClicked" }),
         }),
-
         ui.scroll({ flexGrow = 1, gap = 8 }, body),
     }))
 end
@@ -180,7 +173,11 @@ function onOpen(_context)
     local raw = noctalia.state.get("audio")
     if raw and raw ~= "" then
         local ok, d = pcall(noctalia.json.decode, raw)
-        if ok and d then audioData = d else audioData = nil end
+        if ok then
+            audioData = d
+        else
+            audioData = nil
+        end
     else
         audioData = nil
     end
@@ -199,7 +196,11 @@ end
 noctalia.state.watch("audio", function(value)
     if value and value ~= "" then
         local ok, d = pcall(noctalia.json.decode, value)
-        if ok and d then audioData = d else audioData = nil end
+        if ok then
+            audioData = d
+        else
+            audioData = nil
+        end
     else
         audioData = nil
     end
