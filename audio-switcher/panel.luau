@@ -9,31 +9,18 @@ local function tr(key, fallback)
     return v
 end
 
-local function getSinkLabel(sinkName)
-    if not sinkName then return "?" end
-    if sinkName:match("bluez") then return "Bluetooth" end
-    if sinkName:match("hdmi") then return "HDMI" end
-    if sinkName:match("iec958") then return "Digital" end
-    if sinkName:match("analog") then return "Analogico" end
-    local name = sinkName
-    name = name:gsub("alsa_output%.", "")
-    name = name:gsub("bluez_output%.", "")
-    name = name:gsub("%.analog%-stereo$", "")
-    name = name:gsub("%.hdmi%-stereo.*$", "")
-    name = name:gsub("%.iec958%-stereo$", "")
-    name = name:gsub("%-00$", "")
-    name = name:gsub("_", " ")
-    name = name:gsub("^%s+", "")
-    name = name:gsub("%s+$", "")
-    if name == "" then return "Audio" end
-    return name
+local function getSinkLabel(sink)
+    if not sink then return "?" end
+    if sink.description then return sink.description end
+    return getSinkLabel({name = sink.name})
 end
 
-local function getSinkIcon(sinkName)
-    if not sinkName then return "speakerphone" end
-    if sinkName:match("bluez") then return "bluetooth" end
-    if sinkName:match("hdmi") then return "device-desktop" end
-    if sinkName:match("iec958") then return "cable" end
+local function getSinkIcon(sink)
+    if not sink then return "speakerphone" end
+    local n = sink.name or ""
+    if n:match("bluez") then return "bluetooth" end
+    if n:match("hdmi") then return "device-desktop" end
+    if n:match("iec958") then return "cable" end
     return "speakerphone"
 end
 
@@ -43,23 +30,17 @@ local function getStreamIcon(appName)
     if appName:match("Chromium") or appName:match("Chrome") then return "brand-chrome" end
     if appName:match("Telegram") then return "brand-telegram" end
     if appName:match("Spotify") then return "brand-spotify" end
+    if appName:match("mpv") then return "player-play" end
+    if appName:match("Discord") then return "brand-discord" end
     return "app-window"
 end
 
-local function findSinkNameById(sinkId)
-    if not audioData or not audioData.sinks then return "?" end
+local function findSinkById(sinkId)
+    if not audioData or not audioData.sinks then return nil end
     for _, s in ipairs(audioData.sinks) do
-        if s.id == sinkId then return getSinkLabel(s.name) end
+        if s.id == sinkId then return s end
     end
-    return "?"
-end
-
-local function findSinkIconById(sinkId)
-    if not audioData or not audioData.sinks then return "speakerphone" end
-    for _, s in ipairs(audioData.sinks) do
-        if s.id == sinkId then return getSinkIcon(s.name) end
-    end
-    return "speakerphone"
+    return nil
 end
 
 local function doMoveSinkInput(streamId, sinkId)
@@ -140,17 +121,21 @@ function render()
         }))
     else
         for i, stream in ipairs(audioData.streams) do
-            local sinkName = findSinkNameById(stream.sink)
-            local sinkIcon = findSinkIconById(stream.sink)
+            local currentSink = findSinkById(stream.sink)
+            local sinkLabel = currentSink and currentSink.description or "?"
+            local sinkIcon = currentSink and getSinkIcon(currentSink) or "speakerphone"
             local appIcon = getStreamIcon(stream.name)
 
-            table.insert(body, ui.column({ gap = 3, paddingH = 8, paddingV = 6, fill = "surface_variant", radius = 8 }, {
+            table.insert(body, ui.column({ gap = 4, paddingH = 8, paddingV = 8, fill = "surface_variant", radius = 8 }, {
                 ui.row({ gap = 8, align = "center" }, {
-                    ui.glyph({ name = appIcon, size = 16, color = "primary" }),
-                    ui.label({ text = stream.name, fontSize = 14, fontWeight = "bold", color = "on_surface", flexGrow = 1 }),
-                    ui.glyph({ name = "arrow-right", size = 12, color = "on_surface/0.4" }),
-                    ui.glyph({ name = sinkIcon, size = 14, color = "on_surface" }),
-                    ui.label({ text = sinkName, fontSize = 12, color = "on_surface/0.7" }),
+                    ui.glyph({ name = appIcon, size = 18, color = "primary" }),
+                    ui.column({ gap = 1, flexGrow = 1 }, {
+                        ui.label({ text = stream.name, fontSize = 14, fontWeight = "bold", color = "on_surface" }),
+                        ui.row({ gap = 4, align = "center" }, {
+                            ui.glyph({ name = sinkIcon, size = 12, color = "on_surface/0.5" }),
+                            ui.label({ text = sinkLabel, fontSize = 11, color = "on_surface/0.5" }),
+                        }),
+                    }),
                 }),
             }))
 
@@ -160,8 +145,8 @@ function render()
                     if j <= 5 then
                         local isSelected = (stream.sink == sink.id)
                         local variant = isSelected and "default" or "outline"
-                        local icon = getSinkIcon(sink.name)
-                        local label = getSinkLabel(sink.name)
+                        local icon = getSinkIcon(sink)
+                        local label = getSinkLabel(sink)
                         local cb = "onR_" .. i .. "_" .. j
                         table.insert(sinkButtons, ui.button({
                             text = label,
@@ -172,7 +157,9 @@ function render()
                         }))
                     end
                 end
-                table.insert(body, ui.row({ gap = 4, wrap = true, paddingH = 8, paddingV = 2 }, sinkButtons))
+                table.insert(body, ui.column({ gap = 4, paddingH = 8, paddingV = 2 }, {
+                    ui.row({ gap = 4, wrap = true }, sinkButtons),
+                }))
             end
         end
     end
@@ -184,7 +171,7 @@ function render()
             ui.button({ glyph = "x", variant = "ghost", controlSize = "sm", onClick = "onCloseClicked" }),
         }),
 
-        ui.scroll({ flexGrow = 1, gap = 6 }, body),
+        ui.scroll({ flexGrow = 1, gap = 8 }, body),
     }))
 end
 

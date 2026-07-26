@@ -33,17 +33,35 @@ local function parseSinkInputs(text)
     return list
 end
 
-local function parseSinks(text)
+local function parseSinksFull(text)
     local list = {}
     if not text or text == "" then return list end
-    for line in text:gmatch("[^\n]+") do
-        local id, name = line:match("^(%d+)%s+(%S+)")
-        if id and name then
-            table.insert(list, {
-                id = tonumber(id),
-                name = name,
-            })
+    local currentId, currentName, currentDesc = nil, nil, nil
+    for line in text:gmatch("[^\n]*") do
+        local id = line:match("^Sink #(%d+)")
+        if id then
+            if currentId and currentName then
+                table.insert(list, {
+                    id = tonumber(currentId),
+                    name = currentName,
+                    description = currentDesc or currentName,
+                })
+            end
+            currentId = id
+            currentName = nil
+            currentDesc = nil
         end
+        local n = line:match("^%s+Name: (.+)")
+        if n and currentId then currentName = n:gsub("%s+", "") end
+        local d = line:match("^%s+Description: (.+)")
+        if d and currentId then currentDesc = d end
+    end
+    if currentId and currentName then
+        table.insert(list, {
+            id = tonumber(currentId),
+            name = currentName,
+            description = currentDesc or currentName,
+        })
     end
     return list
 end
@@ -55,10 +73,10 @@ local function refresh()
             streams = parseSinkInputs(inputResult.stdout)
         end
 
-        noctalia.runAsync("pactl list sinks short 2>/dev/null", function(sinkResult)
+        noctalia.runAsync("pactl list sinks 2>/dev/null", function(sinkResult)
             local sinks = {}
             if sinkResult.exitCode == 0 and sinkResult.stdout and sinkResult.stdout ~= "" then
-                sinks = parseSinks(sinkResult.stdout)
+                sinks = parseSinksFull(sinkResult.stdout)
             end
 
             noctalia.runAsync("pactl get-default-sink 2>/dev/null", function(defaultResult)
