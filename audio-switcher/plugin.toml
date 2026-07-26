@@ -1,11 +1,11 @@
 id           = "rael2pac/audio-switcher"
 name         = "Audio Switcher"
-version      = "1.0.0"
+version      = "1.1.0"
 plugin_api   = 3
 author       = "rael2pac"
 license      = "MIT"
-icon         = "volume"
-description  = "Troca a saida de audio rapidamente pela barra ou painel"
+icon         = "peaker"
+description  = "Roteia apps individualmente para saidas de audio diferentes"
 tags         = ["Bar", "Panel", "Audio", "System", "Utility"]
 
 [[service]]
@@ -16,18 +16,11 @@ entry = "service.luau"
 id    = "bar"
 entry = "widget.luau"
 
-  [[widget.setting]]
-  key         = "showPercent"
-  type        = "bool"
-  label_key   = "settings.showPercent.label"
-  description_key = "settings.showPercent.description"
-  default     = true
-
 [[panel]]
 id          = "panel"
 entry       = "panel.luau"
-width       = 450
-height      = 350
+width       = 500
+height      = 400
 placement   = "attached"
 open_near_click = false
 
@@ -36,6 +29,6 @@ key         = "refreshInterval"
 type        = "int"
 label_key   = "settings.refreshInterval.label"
 description_key = "settings.refreshInterval.description"
-default     = 5
-min         = 2
-max         = 30
+default     = 3
+min         = 1
+max         = 15
