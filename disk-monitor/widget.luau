@@ -1,6 +1,5 @@
 local diskData = {}
 local loaded = false
-
 local function findDisk(mountpoint)
     for _, d in ipairs(diskData) do
         if d.mountpoint == mountpoint then
@@ -81,20 +80,19 @@ local function render()
         return mp:gsub("^/", "")
     end
 
-    local mountLabel = stripSlash(displayDisk.mountpoint)
     local availTxt = displayDisk.avail or "?"
 
     local displayFormat = noctalia.state.get("displayFormat") or noctalia.getConfig("displayFormat") or "free_only"
 
     local text = ""
-    if displayFormat == "name_free" then
-        text = mountLabel .. " " .. availTxt
-    elseif displayFormat == "free_only" then
+    if displayFormat == "free_only" then
         text = availTxt
+    elseif displayFormat == "name_free" then
+        text = stripSlash(displayDisk.mountpoint) .. " " .. availTxt
     elseif displayFormat == "percent" then
-        text = mountLabel .. " " .. tostring(pct) .. "%"
+        text = tostring(pct) .. "%"
     elseif displayFormat == "name_percent" then
-        text = mountLabel .. " " .. tostring(pct) .. "%"
+        text = stripSlash(displayDisk.mountpoint) .. " " .. tostring(pct) .. "%"
     else
         text = availTxt
     end
