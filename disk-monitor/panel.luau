@@ -159,7 +159,8 @@ function onOpenSettings()
         return v
     end
 
-    local lines = {
+    local section = table.concat({
+        '[plugin_settings."rael2pac/disk-monitor"]',
         'displayFormat = "' .. g("displayFormat", "name_free") .. '"',
         'hideOnEmpty = ' .. tostring(g("hideOnEmpty", false)),
         'showAllDisks = ' .. tostring(g("showAllDisks", false)),
@@ -168,14 +169,19 @@ function onOpenSettings()
         'selectedDisk = "' .. g("selectedDisk", "/") .. '"',
         'notificationThreshold = ' .. tostring(g("notificationThreshold", 90)),
         'refreshInterval = ' .. tostring(g("refreshInterval", 30)),
-    }
+    }, "\n")
 
-    local cmd = "sed -i '/^\\[plugin_settings\\.\"rael2pac\\/disk-monitor\"\\]/,/^\\[/{/^\\[/!d}; /^\\[plugin_settings/d' " .. configPath
-    cmd = cmd .. " && printf '%s\\n' '[plugin_settings.\"rael2pac/disk-monitor\"]' >> " .. configPath
-    for _, line in ipairs(lines) do
-        local esc = line:gsub("'", "'\\''")
-        cmd = cmd .. " && printf '%s\\n' '" .. esc .. "' >> " .. configPath
-    end
+    local cmd = "python3 << 'PYEOF'\nimport pathlib, re\n"
+    cmd = cmd .. "p = pathlib.Path('" .. configPath .. "')\n"
+    cmd = cmd .. "t = p.read_text()\n"
+    cmd = cmd .. "sec = \"\"\"\n" .. section .. "\n\"\"\"\n"
+    cmd = cmd .. "m = re.search(r'^\\[plugin_settings\\.\"rael2pac/disk-monitor\"\\]', t, re.MULTILINE)\n"
+    cmd = cmd .. "if m:\n"
+    cmd = cmd .. "    e = re.search(r'^\\[', t[m.end():], re.MULTILINE)\n"
+    cmd = cmd .. "    if e: t = t[:m.start()] + sec + t[m.end()+e.start():]\n"
+    cmd = cmd .. "    else: t = t[:m.start()] + sec\n"
+    cmd = cmd .. "else: t = t.rstrip() + '\\n\\n' + sec\n"
+    cmd = cmd .. "p.write_text(t)\nPYEOF"
 
     noctalia.runAsync(cmd, function(r)
         if r.exitCode == 0 then
