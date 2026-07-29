@@ -47,15 +47,7 @@ end
 
 local function getDiskIcon(disk)
     if disk.nvme then return "chip" end
-    if disk.removable then
-        local name = (disk.devName or ""):lower()
-        if name:match("sd") and not name:match("nvme") then
-            return "device-sd-card"
-        end
-        return "device-usb"
-    end
-    if disk.ssd then return "database" end
-    return "hard-drive"
+    return "database"
 end
 
 local function stripSlash(mp)
@@ -97,7 +89,7 @@ function setDisk(idx)
 end
 
 function onCycleFormat()
-    local current = noctalia.state.get("displayFormat") or noctalia.getConfig("displayFormat") or "name_free"
+    local current = noctalia.state.get("displayFormat") or noctalia.getConfig("displayFormat") or "free_only"
     local nextIdx = 1
     for i, f in ipairs(formats) do
         if f == current then
@@ -147,71 +139,6 @@ function onToggleColorMode()
         noctalia.state.set("barColorMode", "none")
     end
     render()
-end
-
-function onOpenSettings()
-    local configPath = "/home/rael/.local/state/noctalia/settings.toml"
-
-    local function g(key, fb)
-        local v = noctalia.state.get(key)
-        if v == nil then v = noctalia.getConfig(key) end
-        if v == nil then v = fb end
-        return v
-    end
-
-    local section = table.concat({
-        '[plugin_settings."rael2pac/disk-monitor"]',
-        'displayFormat = "' .. g("displayFormat", "name_free") .. '"',
-        'hideOnEmpty = ' .. tostring(g("hideOnEmpty", false)),
-        'showAllDisks = ' .. tostring(g("showAllDisks", false)),
-        'showTemperature = ' .. tostring(g("showTemperature", false)),
-        'barColorMode = "' .. g("barColorMode", "none") .. '"',
-        'selectedDisk = "' .. g("selectedDisk", "/") .. '"',
-        'notificationThreshold = ' .. tostring(g("notificationThreshold", 90)),
-        'refreshInterval = ' .. tostring(g("refreshInterval", 30)),
-    }, "\n")
-
-    local function readFile(p)
-        local f = io.open(p, "r")
-        if not f then return nil end
-        local c = f:read("*a")
-        f:close()
-        return c
-    end
-
-    local function writeFile(p, c)
-        local f = io.open(p, "w")
-        if not f then return false end
-        f:write(c)
-        f:close()
-        return true
-    end
-
-    local content = readFile(configPath)
-    if content then
-        local _, s = content:find('%[plugin_settings%.%"rael2pac/disk%-monitor"%]')
-        if s then
-            local _, e = content:find('\n%[', s + 1)
-            local before = content:sub(1, s - 1)
-            local after = ""
-            if e then after = content:sub(e) end
-            content = before .. "\n" .. section .. "\n" .. after
-        else
-            local _, p = content:find('\n%[plugins%]')
-            if p then
-                content = content:sub(1, p - 1) .. "\n" .. section .. "\n" .. content:sub(p)
-            else
-                content = content .. "\n" .. section
-            end
-        end
-        if writeFile(configPath, content) then
-            noctalia.notify({ title = "Monitor de Discos", body = "Configuracoes salvas!" })
-        else
-            noctalia.log("disk-monitor: erro ao escrever " .. configPath)
-        end
-    else
-        noctalia.log("disk-monitor: erro ao ler " .. configPath)
-    end
 end
 
 function render()
@@ -284,7 +211,7 @@ function render()
         end
     end
 
-    local currentFormat = noctalia.state.get("displayFormat") or noctalia.getConfig("displayFormat") or "name_free"
+    local currentFormat = noctalia.state.get("displayFormat") or noctalia.getConfig("displayFormat") or "free_only"
     local hideEmpty = noctalia.state.get("hideOnEmpty")
     if hideEmpty == nil then hideEmpty = noctalia.getConfig("hideOnEmpty") end
     if hideEmpty == nil then hideEmpty = false end
@@ -323,9 +250,6 @@ function render()
         ui.row({ gap = 8, align = "center" }, {
             ui.label({ text = "Todos discos:", fontSize = 11, color = "on_surface/0.7", flexGrow = 1 }),
             ui.button({ text = showAll and "Sim" or "Nao", variant = showAll and "default" or "outline", controlSize = "sm", onClick = "onToggleShowAll" }),
-        }),
-        ui.row({ gap = 8, align = "center", padding = { top = 4 } }, {
-            ui.button({ glyph = "settings", text = " Salvar como Padrao", variant = "default", controlSize = "sm", onClick = "onOpenSettings", flexGrow = 1 }),
         }),
     }))
 

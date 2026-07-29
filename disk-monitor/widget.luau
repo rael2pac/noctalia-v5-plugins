@@ -1,6 +1,5 @@
 local diskData = {}
 local loaded = false
-local currentIndex = 1
 
 local function findDisk(mountpoint)
     for _, d in ipairs(diskData) do
@@ -13,15 +12,7 @@ end
 
 local function getDiskIcon(disk)
     if disk.nvme then return "chip" end
-    if disk.removable then
-        local name = (disk.devName or ""):lower()
-        if name:match("sd") and not name:match("nvme") then
-            return "device-sd-card"
-        end
-        return "device-usb"
-    end
-    if disk.ssd then return "database" end
-    return "hard-drive"
+    return "database"
 end
 
 local function parseBytes(str)
@@ -48,12 +39,6 @@ local function getPercentUsed(disk)
     return math.floor((usedBytes / totalBytes) * 100)
 end
 
-local function getPercentColor(pct)
-    if pct >= 85 then return "#ef4444"
-    elseif pct >= 60 then return "#facc15"
-    else return "#22c55e" end
-end
-
 local function render()
     if not loaded then
         barWidget.setVisible(false)
@@ -64,20 +49,12 @@ local function render()
     if hideOnEmpty == nil then hideOnEmpty = noctalia.getConfig("hideOnEmpty") end
     if hideOnEmpty == nil then hideOnEmpty = false end
 
-    local showAll = noctalia.state.get("showAllDisks")
-    if showAll == nil then showAll = noctalia.getConfig("showAllDisks") end
-    if showAll == nil then showAll = false end
-
-    local colorMode = noctalia.state.get("barColorMode") or noctalia.getConfig("barColorMode") or "none"
-
     local displayDisk = nil
 
-    if showAll and #diskData > 0 then
-        if currentIndex > #diskData then currentIndex = 1 end
-        displayDisk = diskData[currentIndex]
-    else
-        local selected = noctalia.state.get("selectedDisk") or noctalia.getConfig("selectedDisk") or "/"
-        displayDisk = findDisk(selected)
+    local selected = noctalia.state.get("selectedDisk") or noctalia.getConfig("selectedDisk") or "/"
+    displayDisk = findDisk(selected)
+    if not displayDisk and #diskData > 0 then
+        displayDisk = diskData[1]
     end
 
     if not displayDisk then
@@ -97,10 +74,6 @@ local function render()
 
     local pct = getPercentUsed(displayDisk)
     local icon = getDiskIcon(displayDisk)
-    local textColor = "on_surface"
-    if colorMode == "by_usage" then
-        textColor = getPercentColor(pct)
-    end
 
     local function stripSlash(mp)
         if not mp then return "?" end
@@ -111,7 +84,7 @@ local function render()
     local mountLabel = stripSlash(displayDisk.mountpoint)
     local availTxt = displayDisk.avail or "?"
 
-    local displayFormat = noctalia.state.get("displayFormat") or noctalia.getConfig("displayFormat") or "name_free"
+    local displayFormat = noctalia.state.get("displayFormat") or noctalia.getConfig("displayFormat") or "free_only"
 
     local text = ""
     if displayFormat == "name_free" then
@@ -123,17 +96,12 @@ local function render()
     elseif displayFormat == "name_percent" then
         text = mountLabel .. " " .. tostring(pct) .. "%"
     else
-        text = mountLabel .. " " .. availTxt
-    end
-
-    local label = text
-    if showAll then
-        label = "[" .. tostring(currentIndex) .. "/" .. tostring(#diskData) .. "] " .. availTxt
+        text = availTxt
     end
 
     barWidget.render(ui.row({ gap = 5, align = "center" }, {
-        ui.glyph({ name = icon, size = 16, color = textColor }),
-        ui.label({ text = label, fontSize = 13, fontWeight = "bold", color = textColor }),
+        ui.glyph({ name = icon, size = 16, color = "on_surface" }),
+        ui.label({ text = text, fontSize = 13, fontWeight = "bold", color = "on_surface" }),
     }))
 
     local tooltip = displayDisk.devName .. " (" .. (displayDisk.fstype or "?") .. ") - " .. (displayDisk.used or "?") .. " / " .. (displayDisk.size or "?") .. " (" .. tostring(pct) .. "%)"
@@ -183,28 +151,12 @@ noctalia.state.watch("hideOnEmpty", function(_value)
     render()
 end)
 
-noctalia.state.watch("showAllDisks", function(_value)
-    render()
-end)
-
-noctalia.state.watch("barColorMode", function(_value)
-    render()
-end)
-
 noctalia.state.watch("showTemperature", function(_value)
     render()
 end)
 
 function onClick()
-    local showAll = noctalia.state.get("showAllDisks")
-    if showAll == nil then showAll = noctalia.getConfig("showAllDisks") end
-    if showAll and #diskData > 0 then
-        currentIndex = currentIndex + 1
-        if currentIndex > #diskData then currentIndex = 1 end
-        render()
-    else
-        noctalia.togglePanel("rael2pac/disk-monitor:panel")
-    end
+    noctalia.togglePanel("rael2pac/disk-monitor:panel")
 end
 
 render()
