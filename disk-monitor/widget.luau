@@ -102,24 +102,33 @@ local function render()
         textColor = getPercentColor(pct)
     end
 
+    local function stripSlash(mp)
+        if not mp then return "?" end
+        if mp == "/" then return "/" end
+        return mp:gsub("^/", "")
+    end
+
+    local mountLabel = stripSlash(displayDisk.mountpoint)
+    local availTxt = displayDisk.avail or "?"
+
     local displayFormat = noctalia.state.get("displayFormat") or noctalia.getConfig("displayFormat") or "name_free"
 
     local text = ""
     if displayFormat == "name_free" then
-        text = (displayDisk.avail or "?") .. " livres"
+        text = mountLabel .. " " .. availTxt
     elseif displayFormat == "free_only" then
-        text = displayDisk.avail or "?"
+        text = availTxt
     elseif displayFormat == "percent" then
-        text = tostring(pct) .. "%"
+        text = mountLabel .. " " .. tostring(pct) .. "%"
     elseif displayFormat == "name_percent" then
-        text = (displayDisk.avail or "?") .. " (" .. tostring(pct) .. "%)"
+        text = mountLabel .. " " .. tostring(pct) .. "%"
     else
-        text = (displayDisk.avail or "?") .. " livres"
+        text = mountLabel .. " " .. availTxt
     end
 
     local label = text
     if showAll then
-        label = "[" .. tostring(currentIndex) .. "/" .. tostring(#diskData) .. "] " .. text
+        label = "[" .. tostring(currentIndex) .. "/" .. tostring(#diskData) .. "] " .. availTxt
     end
 
     barWidget.render(ui.row({ gap = 5, align = "center" }, {
