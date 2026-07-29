@@ -150,75 +150,40 @@ function onToggleColorMode()
 end
 
 function onOpenSettings()
-    local home = os.getenv("HOME")
-    local configPath = home .. "/.local/state/noctalia/settings.toml"
+    local configPath = "/home/rael/.local/state/noctalia/settings.toml"
 
-    local function getVal(key, fallback)
+    local function g(key, fb)
         local v = noctalia.state.get(key)
         if v == nil then v = noctalia.getConfig(key) end
-        if v == nil then v = fallback end
+        if v == nil then v = fb end
         return v
     end
 
-    local function boolStr(v)
-        if v then return "true" else return "false" end
+    local lines = {
+        'displayFormat = "' .. g("displayFormat", "name_free") .. '"',
+        'hideOnEmpty = ' .. tostring(g("hideOnEmpty", false)),
+        'showAllDisks = ' .. tostring(g("showAllDisks", false)),
+        'showTemperature = ' .. tostring(g("showTemperature", false)),
+        'barColorMode = "' .. g("barColorMode", "none") .. '"',
+        'selectedDisk = "' .. g("selectedDisk", "/") .. '"',
+        'notificationThreshold = ' .. tostring(g("notificationThreshold", 90)),
+        'refreshInterval = ' .. tostring(g("refreshInterval", 30)),
+    }
+
+    local cmd = "sed -i '/^\\[plugin_settings\\.\"rael2pac\\/disk-monitor\"\\]/,/^\\[/{/^\\[/!d}; /^\\[plugin_settings/d' " .. configPath
+    cmd = cmd .. " && printf '%s\\n' '[plugin_settings.\"rael2pac/disk-monitor\"]' >> " .. configPath
+    for _, line in ipairs(lines) do
+        local esc = line:gsub("'", "'\\''")
+        cmd = cmd .. " && printf '%s\\n' '" .. esc .. "' >> " .. configPath
     end
 
-    local displayFormat = getVal("displayFormat", "name_free")
-    local hideEmpty = getVal("hideOnEmpty", false)
-    local showAll = getVal("showAllDisks", false)
-    local showTemp = getVal("showTemperature", false)
-    local colorMode = getVal("barColorMode", "none")
-    local selectedDisk = getVal("selectedDisk", "/")
-    local notifyThresh = getVal("notificationThreshold", 90)
-    local refreshInt = getVal("refreshInterval", 30)
-
-    local sectionText = string.format(
-        '[plugin_settings."rael2pac/disk-monitor"]\n' ..
-        'displayFormat = "%s"\n' ..
-        'hideOnEmpty = %s\n' ..
-        'showAllDisks = %s\n' ..
-        'showTemperature = %s\n' ..
-        'barColorMode = "%s"\n' ..
-        'selectedDisk = "%s"\n' ..
-        'notificationThreshold = %s\n' ..
-        'refreshInterval = %s\n',
-        displayFormat, boolStr(hideEmpty), boolStr(showAll), boolStr(showTemp),
-        colorMode, selectedDisk, tostring(notifyThresh), tostring(refreshInt)
-    )
-
-    local f = io.open(configPath, "r")
-    if not f then
-        noctalia.log("disk-monitor: erro ao ler " .. configPath)
-        return
-    end
-    local content = f:read("*a")
-    f:close()
-
-    local _, sStart = content:find('%[plugin_settings%.%"rael2pac/disk%-monitor"%]')
-    if sStart then
-        local _, sEnd = content:find('\n%[', sStart + 1)
-        local before = content:sub(1, sStart - 1)
-        local after = ""
-        if sEnd then after = content:sub(sEnd) end
-        content = before .. sectionText .. after
-    else
-        local _, pStart = content:find('\n%[plugins%]')
-        if pStart then
-            content = content:sub(1, pStart - 1) .. "\n" .. sectionText .. content:sub(pStart)
+    noctalia.runAsync(cmd, function(r)
+        if r.exitCode == 0 then
+            noctalia.notify({ title = "Monitor de Discos", body = "Configuracoes salvas!" })
         else
-            content = content .. "\n" .. sectionText
+            noctalia.log("disk-monitor: erro: " .. (r.stderr or "desconhecido"))
         end
-    end
-
-    f = io.open(configPath, "w")
-    if f then
-        f:write(content)
-        f:close()
-        noctalia.notify({ title = "Monitor de Discos", body = "Configuracoes salvas!" })
-    else
-        noctalia.log("disk-monitor: erro ao escrever " .. configPath)
-    end
+    end)
 end
 
 function render()
