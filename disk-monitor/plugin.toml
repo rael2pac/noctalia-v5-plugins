@@ -1,11 +1,11 @@
 id           = "rael2pac/disk-monitor"
 name         = "Monitor de Discos"
-version      = "1.0.0"
+version      = "2.0.0"
 plugin_api   = 3
 author       = "rael2pac"
 license      = "MIT"
 icon         = "database"
-description  = "Monitora todos os discos conectados e exibe espaço livre na barra e painel detalhado"
+description  = "Monitora todos os discos conectados e exibe espaço livre na barra com painel detalhado, temperatura e notificacoes"
 tags         = ["Bar", "Panel", "System", "Hardware", "Utility"]
 
 [[service]]
@@ -18,10 +18,26 @@ entry = "widget.luau"
 
   [[widget.setting]]
   key         = "displayFormat"
-  type        = "string"
+  type        = "select"
   label_key   = "settings.displayFormat.label"
   description_key = "settings.displayFormat.description"
   default     = "name_free"
+
+    [[widget.setting.option]]
+    value = "name_free"
+    label_key = "settings.displayFormat.option.name_free"
+
+    [[widget.setting.option]]
+    value = "free_only"
+    label_key = "settings.displayFormat.option.free_only"
+
+    [[widget.setting.option]]
+    value = "percent"
+    label_key = "settings.displayFormat.option.percent"
+
+    [[widget.setting.option]]
+    value = "name_percent"
+    label_key = "settings.displayFormat.option.name_percent"
 
   [[widget.setting]]
   key         = "hideOnEmpty"
@@ -33,8 +49,8 @@ entry = "widget.luau"
 [[panel]]
 id          = "panel"
 entry       = "panel.luau"
-width       = 500
-height      = 350
+width       = 600
+height      = 450
 placement   = "attached"
 open_near_click = false
 
@@ -46,3 +62,48 @@ description_key = "settings.refreshInterval.description"
 default     = 30
 min         = 10
 max         = 300
+
+[[setting]]
+key         = "selectedDisk"
+type        = "string"
+label_key   = "settings.selectedDisk.label"
+description_key = "settings.selectedDisk.description"
+default     = "/"
+
+[[setting]]
+key         = "notificationThreshold"
+type        = "int"
+label_key   = "settings.notificationThreshold.label"
+description_key = "settings.notificationThreshold.description"
+default     = 90
+min         = 50
+max         = 100
+
+[[setting]]
+key         = "showTemperature"
+type        = "bool"
+label_key   = "settings.showTemperature.label"
+description_key = "settings.showTemperature.description"
+default     = false
+
+[[setting]]
+key         = "barColorMode"
+type        = "select"
+label_key   = "settings.barColorMode.label"
+description_key = "settings.barColorMode.description"
+default     = "none"
+
+  [[setting.option]]
+  value = "none"
+  label_key = "settings.barColorMode.option.none"
+
+  [[setting.option]]
+  value = "by_usage"
+  label_key = "settings.barColorMode.option.by_usage"
+
+[[setting]]
+key         = "showAllDisks"
+type        = "bool"
+label_key   = "settings.showAllDisks.label"
+description_key = "settings.showAllDisks.description"
+default     = false
