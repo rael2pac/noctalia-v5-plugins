@@ -171,25 +171,47 @@ function onOpenSettings()
         'refreshInterval = ' .. tostring(g("refreshInterval", 30)),
     }, "\n")
 
-    local cmd = "python3 << 'PYEOF'\nimport pathlib, re\n"
-    cmd = cmd .. "p = pathlib.Path('" .. configPath .. "')\n"
-    cmd = cmd .. "t = p.read_text()\n"
-    cmd = cmd .. "sec = \"\"\"\n" .. section .. "\n\"\"\"\n"
-    cmd = cmd .. "m = re.search(r'^\\[plugin_settings\\.\"rael2pac/disk-monitor\"\\]', t, re.MULTILINE)\n"
-    cmd = cmd .. "if m:\n"
-    cmd = cmd .. "    e = re.search(r'^\\[', t[m.end():], re.MULTILINE)\n"
-    cmd = cmd .. "    if e: t = t[:m.start()] + sec + t[m.end()+e.start():]\n"
-    cmd = cmd .. "    else: t = t[:m.start()] + sec\n"
-    cmd = cmd .. "else: t = t.rstrip() + '\\n\\n' + sec\n"
-    cmd = cmd .. "p.write_text(t)\nPYEOF"
+    local function readFile(p)
+        local f = io.open(p, "r")
+        if not f then return nil end
+        local c = f:read("*a")
+        f:close()
+        return c
+    end
 
-    noctalia.runAsync(cmd, function(r)
-        if r.exitCode == 0 then
+    local function writeFile(p, c)
+        local f = io.open(p, "w")
+        if not f then return false end
+        f:write(c)
+        f:close()
+        return true
+    end
+
+    local content = readFile(configPath)
+    if content then
+        local _, s = content:find('%[plugin_settings%.%"rael2pac/disk%-monitor"%]')
+        if s then
+            local _, e = content:find('\n%[', s + 1)
+            local before = content:sub(1, s - 1)
+            local after = ""
+            if e then after = content:sub(e) end
+            content = before .. "\n" .. section .. "\n" .. after
+        else
+            local _, p = content:find('\n%[plugins%]')
+            if p then
+                content = content:sub(1, p - 1) .. "\n" .. section .. "\n" .. content:sub(p)
+            else
+                content = content .. "\n" .. section
+            end
+        end
+        if writeFile(configPath, content) then
             noctalia.notify({ title = "Monitor de Discos", body = "Configuracoes salvas!" })
         else
-            noctalia.log("disk-monitor: erro: " .. (r.stderr or "desconhecido"))
+            noctalia.log("disk-monitor: erro ao escrever " .. configPath)
         end
-    end)
+    else
+        noctalia.log("disk-monitor: erro ao ler " .. configPath)
+    end
 end
 
 function render()
