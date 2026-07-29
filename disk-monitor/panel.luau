@@ -1,5 +1,3 @@
--- panel.luau -- Monitor de Discos: painel com seletor e config
-
 local disks = {}
 local panelOpen = false
 
@@ -34,7 +32,7 @@ local function getPercentUsed(disk)
 end
 
 local function getPercentColor(pct)
-    if pct >= 80 then return "#ef4444"
+    if pct >= 85 then return "#ef4444"
     elseif pct >= 60 then return "#facc15"
     else return "#22c55e" end
 end
@@ -48,6 +46,7 @@ local function getBarWidth(pct)
 end
 
 local function getDiskIcon(disk)
+    if disk.nvme then return "chip" end
     if disk.removable then
         local name = (disk.devName or ""):lower()
         if name:match("sd") and not name:match("nvme") then
@@ -55,7 +54,8 @@ local function getDiskIcon(disk)
         end
         return "device-usb"
     end
-    return "database"
+    if disk.ssd then return "database" end
+    return "hard-drive"
 end
 
 local function stripSlash(mp)
@@ -77,6 +77,9 @@ local function formatSize(disk)
     end
 end
 
+local formats = { "name_free", "free_only", "percent", "name_percent" }
+local formatLabels = { name_free = "Nome + Livre", free_only = "So Livre", percent = "Percentual", name_percent = "Nome + %" }
+
 function onSelect1() setDisk(1) end
 function onSelect2() setDisk(2) end
 function onSelect3() setDisk(3) end
@@ -94,7 +97,6 @@ function setDisk(idx)
 end
 
 function onCycleFormat()
-    local formats = { "name_free", "free_only", "percent", "name_percent" }
     local current = noctalia.state.get("displayFormat") or noctalia.getConfig("displayFormat") or "name_free"
     local nextIdx = 1
     for i, f in ipairs(formats) do
@@ -107,9 +109,53 @@ function onCycleFormat()
     render()
 end
 
+function onToggleHideEmpty()
+    local current = noctalia.state.get("hideOnEmpty")
+    if current == nil then
+        current = noctalia.getConfig("hideOnEmpty")
+    end
+    if current == nil then current = false end
+    noctalia.state.set("hideOnEmpty", not current)
+    render()
+end
+
+function onToggleShowAll()
+    local current = noctalia.state.get("showAllDisks")
+    if current == nil then
+        current = noctalia.getConfig("showAllDisks")
+    end
+    if current == nil then current = false end
+    noctalia.state.set("showAllDisks", not current)
+    render()
+end
+
+function onToggleTemp()
+    local current = noctalia.state.get("showTemperature")
+    if current == nil then
+        current = noctalia.getConfig("showTemperature")
+    end
+    if current == nil then current = false end
+    noctalia.state.set("showTemperature", not current)
+    render()
+end
+
+function onToggleColorMode()
+    local current = noctalia.state.get("barColorMode") or noctalia.getConfig("barColorMode") or "none"
+    if current == "none" then
+        noctalia.state.set("barColorMode", "by_usage")
+    else
+        noctalia.state.set("barColorMode", "none")
+    end
+    render()
+end
+
+function onOpenSettings()
+    noctalia.openSettings("rael2pac/disk-monitor")
+end
+
 function render()
     local body = {}
-    local currentDisplay = noctalia.state.get("selectedDisk") or "/"
+    local currentDisplay = noctalia.state.get("selectedDisk") or noctalia.getConfig("selectedDisk") or "/"
 
     if #disks == 0 then
         table.insert(body, ui.column({ align = "center", justify = "center", flexGrow = 1, padding = 30 }, {
@@ -127,7 +173,9 @@ function render()
             local variant = isSelected and "default" or "outline"
 
             local tagLabel = ""
-            if d.ssd then tagLabel = "SSD" end
+            if d.nvme then tagLabel = "NVMe"
+            elseif d.ssd then tagLabel = "SSD"
+            end
             if d.removable then
                 if tagLabel ~= "" then tagLabel = tagLabel .. " " end
                 tagLabel = tagLabel .. "USB"
@@ -138,16 +186,27 @@ function render()
                 modelStr = d.model
             end
 
+            local tempStr = ""
+            local showTemp = noctalia.state.get("showTemperature") or noctalia.getConfig("showTemperature")
+            if showTemp then
+                tempStr = d.temp or tr("panel.na", "N/D")
+            end
+
             local cb = "onSelect" .. i
+
+            local infoRow = { ui.label({ text = label, fontSize = 14, fontWeight = "bold", color = "on_surface" }) }
+            if tagLabel ~= "" then
+                table.insert(infoRow, ui.label({ text = tagLabel, fontSize = 11, color = color }))
+            end
+            if tempStr ~= "" then
+                table.insert(infoRow, ui.label({ text = " " .. tempStr, fontSize = 11, color = "tertiary" }))
+            end
 
             table.insert(body, ui.column({ gap = 3, paddingH = 8, paddingV = 6, fill = "surface_variant", radius = 8 }, {
                 ui.row({ gap = 8, align = "center" }, {
                     ui.button({ glyph = icon, variant = variant, controlSize = "sm", onClick = cb }),
                     ui.column({ gap = 1, flexGrow = 1 }, {
-                        ui.row({ gap = 6, align = "center" }, {
-                            ui.label({ text = label, fontSize = 14, fontWeight = "bold", color = "on_surface" }),
-                            ui.label({ text = tagLabel, fontSize = 11, color = color }),
-                        }),
+                        ui.row({ gap = 6, align = "center" }, infoRow),
                         ui.label({ text = modelStr, fontSize = 10, color = "on_surface/0.5" }),
                     }),
                     ui.label({ text = tostring(pct) .. "%", fontSize = 14, fontWeight = "bold", color = color }),
@@ -165,29 +224,47 @@ function render()
     end
 
     local currentFormat = noctalia.state.get("displayFormat") or noctalia.getConfig("displayFormat") or "name_free"
-    local hideOnEmpty = noctalia.getConfig("hideOnEmpty")
-    if hideOnEmpty == nil then hideOnEmpty = false end
-    local refreshInterval = noctalia.getConfig("refreshInterval") or 30
+    local hideEmpty = noctalia.state.get("hideOnEmpty")
+    if hideEmpty == nil then hideEmpty = noctalia.getConfig("hideOnEmpty") end
+    if hideEmpty == nil then hideEmpty = false end
 
-    local formatLabel = "Espaco Livre"
-    if currentFormat == "free_only" then formatLabel = "Apenas Livre"
-    elseif currentFormat == "percent" then formatLabel = "Percentual"
-    elseif currentFormat == "name_percent" then formatLabel = "Livre + Percentual"
-    end
+    local showAll = noctalia.state.get("showAllDisks")
+    if showAll == nil then showAll = noctalia.getConfig("showAllDisks") end
+    if showAll == nil then showAll = false end
+
+    local showTemp = noctalia.state.get("showTemperature")
+    if showTemp == nil then showTemp = noctalia.getConfig("showTemperature") end
+    if showTemp == nil then showTemp = false end
+
+    local colorMode = noctalia.state.get("barColorMode") or noctalia.getConfig("barColorMode") or "none"
 
     table.insert(body, ui.column({ gap = 6, paddingH = 8, paddingV = 8, fill = "surface_variant", radius = 8 }, {
-        ui.label({ text = tr("panel.config", "Configuracoes"), fontSize = 13, fontWeight = "bold", color = "primary" }),
-        ui.row({ gap = 8, align = "center" }, {
-            ui.label({ text = tr("panel.format", "Formato na barra:"), fontSize = 11, color = "on_surface/0.7", flexGrow = 1 }),
-            ui.button({ text = formatLabel, glyph = "adjustments", variant = "outline", controlSize = "sm", onClick = "onCycleFormat" }),
+        ui.row({ gap = 6, align = "center" }, {
+            ui.glyph({ name = "settings", size = 14, color = "primary" }),
+            ui.label({ text = tr("panel.config", "Configuracoes"), fontSize = 13, fontWeight = "bold", color = "primary", flexGrow = 1 }),
         }),
         ui.row({ gap = 8, align = "center" }, {
-            ui.label({ text = tr("panel.interval", "Atualizar a cada:"), fontSize = 11, color = "on_surface/0.7", flexGrow = 1 }),
-            ui.label({ text = tostring(refreshInterval) .. "s", fontSize = 11, fontWeight = "bold", color = "on_surface" }),
+            ui.label({ text = tr("panel.format", "Formato:"), fontSize = 11, color = "on_surface/0.7", flexGrow = 1 }),
+            ui.button({ text = formatLabels[currentFormat] or currentFormat, variant = "outline", controlSize = "sm", onClick = "onCycleFormat" }),
         }),
         ui.row({ gap = 8, align = "center" }, {
             ui.label({ text = tr("panel.hideEmpty", "Ocultar vazio:"), fontSize = 11, color = "on_surface/0.7", flexGrow = 1 }),
-            ui.label({ text = hideOnEmpty and "Sim" or "Nao", fontSize = 11, fontWeight = "bold", color = "on_surface" }),
+            ui.button({ text = hideEmpty and "Sim" or "Nao", variant = hideEmpty and "default" or "outline", controlSize = "sm", onClick = "onToggleHideEmpty" }),
+        }),
+        ui.row({ gap = 8, align = "center" }, {
+            ui.label({ text = "Cor por uso:", fontSize = 11, color = "on_surface/0.7", flexGrow = 1 }),
+            ui.button({ text = colorMode == "by_usage" and "Sim" or "Nao", variant = colorMode == "by_usage" and "default" or "outline", controlSize = "sm", onClick = "onToggleColorMode" }),
+        }),
+        ui.row({ gap = 8, align = "center" }, {
+            ui.label({ text = "Temp. NVMe:", fontSize = 11, color = "on_surface/0.7", flexGrow = 1 }),
+            ui.button({ text = showTemp and "Sim" or "Nao", variant = showTemp and "default" or "outline", controlSize = "sm", onClick = "onToggleTemp" }),
+        }),
+        ui.row({ gap = 8, align = "center" }, {
+            ui.label({ text = "Todos discos:", fontSize = 11, color = "on_surface/0.7", flexGrow = 1 }),
+            ui.button({ text = showAll and "Sim" or "Nao", variant = showAll and "default" or "outline", controlSize = "sm", onClick = "onToggleShowAll" }),
+        }),
+        ui.row({ gap = 8, align = "center", padding = { top = 4 } }, {
+            ui.button({ glyph = "settings", text = " Salvar como Padrao", variant = "default", controlSize = "sm", onClick = "onOpenSettings", flexGrow = 1 }),
         }),
     }))
 
@@ -197,7 +274,6 @@ function render()
             ui.label({ text = tr("panel.title", "Monitor de Discos"), fontSize = 16, fontWeight = "bold", color = "on_surface", flexGrow = 1 }),
             ui.button({ glyph = "x", variant = "ghost", controlSize = "sm", onClick = "onCloseClicked" }),
         }),
-
         ui.scroll({ flexGrow = 1, gap = 6 }, body),
     }))
 end
