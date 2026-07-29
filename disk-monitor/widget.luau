@@ -94,8 +94,8 @@ local function render()
 
     barWidget.render(ui.row({ gap = 3, align = "center" }, {
         ui.glyph({ name = icon, size = 16, color = "on_surface" }),
-        ui.label({ text = mountLabel, fontSize = 12, fontWeight = "bold", color = "on_surface" }),
-        ui.label({ text = availTxt, fontSize = 12, fontWeight = "bold", color = "on_surface" }),
+        ui.label({ text = mountLabel, fontSize = 13, fontWeight = "bold", color = "on_surface" }),
+        ui.label({ text = availTxt, fontSize = 13, fontWeight = "bold", color = "on_surface" }),
     }))
 
     local tooltip = displayDisk.devName .. " (" .. (displayDisk.fstype or "?") .. ") - " .. (displayDisk.used or "?") .. " / " .. (displayDisk.size or "?") .. " (" .. tostring(pct) .. "%)"
