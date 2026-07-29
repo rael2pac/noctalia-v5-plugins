@@ -69,8 +69,8 @@ local function formatSize(disk)
     end
 end
 
-local formats = { "name_free", "free_only", "percent", "name_percent" }
-local formatLabels = { name_free = "Nome + Livre", free_only = "So Livre", percent = "Percentual", name_percent = "Nome + %" }
+local formats = { "free_total", "free_only", "name_free", "percent", "name_percent" }
+local formatLabels = { free_total = "Livre / Total", free_only = "So Livre", name_free = "Nome + Livre", percent = "Percentual", name_percent = "Nome + %" }
 
 function onSelect1() setDisk(1) end
 function onSelect2() setDisk(2) end
@@ -89,7 +89,7 @@ function setDisk(idx)
 end
 
 function onCycleFormat()
-    local current = noctalia.state.get("displayFormat") or noctalia.getConfig("displayFormat") or "free_only"
+    local current = noctalia.state.get("displayFormat") or noctalia.getConfig("displayFormat") or "free_total"
     local nextIdx = 1
     for i, f in ipairs(formats) do
         if f == current then
@@ -211,7 +211,7 @@ function render()
         end
     end
 
-    local currentFormat = noctalia.state.get("displayFormat") or noctalia.getConfig("displayFormat") or "free_only"
+    local currentFormat = noctalia.state.get("displayFormat") or noctalia.getConfig("displayFormat") or "free_total"
     local hideEmpty = noctalia.state.get("hideOnEmpty")
     if hideEmpty == nil then hideEmpty = noctalia.getConfig("hideOnEmpty") end
     if hideEmpty == nil then hideEmpty = false end

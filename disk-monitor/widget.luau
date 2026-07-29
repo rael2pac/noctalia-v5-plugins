@@ -80,13 +80,37 @@ local function render()
         return mp:gsub("^/", "")
     end
 
-    local availTxt = displayDisk.avail or "?"
+    local availBytes = parseBytes(displayDisk.avail)
+    local totalBytes = parseBytes(displayDisk.size)
+    local availGB = availBytes / (1024 * 1024 * 1024)
+    local totalGB = totalBytes / (1024 * 1024 * 1024)
 
-    local displayFormat = noctalia.state.get("displayFormat") or noctalia.getConfig("displayFormat") or "free_only"
+    local function fmtGB(n)
+        if n >= 100 then return string.format("%.0f", n)
+        elseif n >= 1 then return string.format("%.1f", n)
+        else return string.format("%.2f", n) end
+    end
+
+    local availTxt = displayDisk.avail or "?"
+    local totalTxt = displayDisk.size or "?"
+    local freeTotalTxt = ""
+    if totalGB >= 1 then
+        freeTotalTxt = fmtGB(availGB) .. " / " .. fmtGB(totalGB) .. " GB"
+    else
+        freeTotalTxt = availTxt .. " / " .. totalTxt
+    end
+
+    local displayFormat = noctalia.state.get("displayFormat") or noctalia.getConfig("displayFormat") or "free_total"
 
     local text = ""
     if displayFormat == "free_only" then
-        text = availTxt
+        if totalGB >= 1 then
+            text = fmtGB(availGB) .. " GB"
+        else
+            text = availTxt
+        end
+    elseif displayFormat == "free_total" then
+        text = freeTotalTxt
     elseif displayFormat == "name_free" then
         text = stripSlash(displayDisk.mountpoint) .. " " .. availTxt
     elseif displayFormat == "percent" then
@@ -94,7 +118,7 @@ local function render()
     elseif displayFormat == "name_percent" then
         text = stripSlash(displayDisk.mountpoint) .. " " .. tostring(pct) .. "%"
     else
-        text = availTxt
+        text = freeTotalTxt
     end
 
     barWidget.render(ui.row({ gap = 5, align = "center" }, {
