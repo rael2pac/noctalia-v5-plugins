@@ -87,9 +87,9 @@ local function render()
     local availGB = availBytes / (1024 * 1024 * 1024)
     local availTxt = ""
     if availGB >= 1 then
-        availTxt = string.format("%.1f", availGB):gsub("%.", ",")
+        availTxt = string.format("%.1f", availGB):gsub("%.", ",") .. " GB"
     else
-        availTxt = (displayDisk.avail or "0"):gsub("[,]?[GTMKMk]?[Bb]?$", "")
+        availTxt = (displayDisk.avail or "0"):gsub("[,]?[GTMKMk]?[Bb]?$", "") .. " GB"
     end
 
     local barLen = 6
