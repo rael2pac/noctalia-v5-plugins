@@ -81,51 +81,27 @@ local function render()
         return mp:gsub("^/", "")
     end
 
-    local availBytes = parseBytes(displayDisk.avail)
-    local totalBytes = parseBytes(displayDisk.size)
-    local usedBytes = parseBytes(displayDisk.used)
-    local availGB = availBytes / (1024 * 1024 * 1024)
-    local totalGB = totalBytes / (1024 * 1024 * 1024)
-    local usedGB = usedBytes / (1024 * 1024 * 1024)
-
-    local function fmtGB(n)
-        if n >= 100 then return string.format("%.0f", n)
-        elseif n >= 1 then return string.format("%.1f", n)
-        else return string.format("%.2f", n) end
-    end
-
     local mountLabel = stripSlash(displayDisk.mountpoint)
-    local freeDetailTxt = ""
-    if totalGB >= 1 then
-        freeDetailTxt = fmtGB(availGB) .. " GB (" .. fmtGB(usedGB) .. " GB usados)"
-    else
-        freeDetailTxt = (displayDisk.avail or "?") .. " (" .. (displayDisk.used or "?") .. " usados)"
+
+    local barLen = 15
+    local filled = math.floor(pct / (100 / barLen))
+    if filled > barLen then filled = barLen end
+    if filled < 0 then filled = 0 end
+    local empty = barLen - filled
+    local bar = string.rep("█", filled) .. string.rep("░", empty)
+
+    local color = "#22c55e"
+    if pct >= 85 then
+        color = "#ef4444"
+    elseif pct >= 60 then
+        color = "#facc15"
     end
 
-    local displayFormat = noctalia.state.get("displayFormat") or noctalia.getConfig("displayFormat") or "free_total"
-
-    local text = ""
-    if displayFormat == "free_total" then
-        text = mountLabel .. " " .. freeDetailTxt
-    elseif displayFormat == "free_only" then
-        if totalGB >= 1 then
-            text = fmtGB(availGB) .. " GB"
-        else
-            text = displayDisk.avail or "?"
-        end
-    elseif displayFormat == "name_free" then
-        text = mountLabel .. " " .. (displayDisk.avail or "?")
-    elseif displayFormat == "percent" then
-        text = tostring(pct) .. "%"
-    elseif displayFormat == "name_percent" then
-        text = mountLabel .. " " .. tostring(pct) .. "%"
-    else
-        text = mountLabel .. " " .. freeDetailTxt
-    end
-
-    barWidget.render(ui.row({ gap = 5, align = "center" }, {
-        ui.glyph({ name = icon, size = 16, color = "on_surface" }),
-        ui.label({ text = text, fontSize = 13, fontWeight = "bold", color = "on_surface" }),
+    barWidget.render(ui.row({ gap = 4, align = "center" }, {
+        ui.glyph({ name = icon, size = 14, color = "on_surface" }),
+        ui.label({ text = mountLabel, fontSize = 12, fontWeight = "bold", color = "on_surface" }),
+        ui.label({ text = bar, fontFamily = "monospace", fontSize = 11, color = color }),
+        ui.label({ text = tostring(pct) .. "%", fontSize = 12, fontWeight = "bold", color = color }),
     }))
 
     local tooltip = displayDisk.devName .. " (" .. (displayDisk.fstype or "?") .. ") - " .. (displayDisk.used or "?") .. " / " .. (displayDisk.size or "?") .. " (" .. tostring(pct) .. "%)"
@@ -164,10 +140,6 @@ end)
 loadExistingState()
 
 noctalia.state.watch("selectedDisk", function(_value)
-    render()
-end)
-
-noctalia.state.watch("displayFormat", function(_value)
     render()
 end)
 
