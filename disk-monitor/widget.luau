@@ -83,7 +83,16 @@ local function render()
 
     local mountLabel = stripSlash(displayDisk.mountpoint)
 
-    local barLen = 15
+    local availBytes = parseBytes(displayDisk.avail)
+    local availGB = availBytes / (1024 * 1024 * 1024)
+    local availTxt = ""
+    if availGB >= 1 then
+        availTxt = string.format("%.1f", availGB):gsub("%.", ",")
+    else
+        availTxt = (displayDisk.avail or "0"):gsub("[,]?[GTMKMk]?[Bb]?$", "")
+    end
+
+    local barLen = 6
     local filled = math.floor(pct / (100 / barLen))
     if filled > barLen then filled = barLen end
     if filled < 0 then filled = 0 end
@@ -97,11 +106,11 @@ local function render()
         color = "#facc15"
     end
 
-    barWidget.render(ui.row({ gap = 4, align = "center" }, {
-        ui.glyph({ name = icon, size = 14, color = "on_surface" }),
-        ui.label({ text = mountLabel, fontSize = 12, fontWeight = "bold", color = "on_surface" }),
-        ui.label({ text = bar, fontFamily = "monospace", fontSize = 11, color = color }),
-        ui.label({ text = tostring(pct) .. "%", fontSize = 12, fontWeight = "bold", color = color }),
+    barWidget.render(ui.row({ gap = 3, align = "center" }, {
+        ui.glyph({ name = icon, size = 12, color = "on_surface" }),
+        ui.label({ text = mountLabel, fontSize = 11, fontWeight = "bold", color = "on_surface" }),
+        ui.label({ text = bar, fontFamily = "monospace", fontSize = 10, color = color }),
+        ui.label({ text = availTxt, fontSize = 11, fontWeight = "bold", color = color }),
     }))
 
     local tooltip = displayDisk.devName .. " (" .. (displayDisk.fstype or "?") .. ") - " .. (displayDisk.used or "?") .. " / " .. (displayDisk.size or "?") .. " (" .. tostring(pct) .. "%)"
