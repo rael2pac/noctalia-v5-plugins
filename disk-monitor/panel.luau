@@ -132,16 +132,6 @@ function onToggleTemp()
     render()
 end
 
-function onToggleColorMode()
-    local current = noctalia.state.get("barColorMode") or noctalia.getConfig("barColorMode") or "none"
-    if current == "none" then
-        noctalia.state.set("barColorMode", "by_usage")
-    else
-        noctalia.state.set("barColorMode", "none")
-    end
-    render()
-end
-
 function render()
     local body = {}
     local currentDisplay = noctalia.state.get("selectedDisk") or noctalia.getConfig("selectedDisk") or "/"
@@ -225,8 +215,6 @@ function render()
     if showTemp == nil then showTemp = noctalia.getConfig("showTemperature") end
     if showTemp == nil then showTemp = false end
 
-    local colorMode = noctalia.state.get("barColorMode") or noctalia.getConfig("barColorMode") or "none"
-
     table.insert(body, ui.column({ gap = 6, paddingH = 8, paddingV = 8, fill = "surface_variant", radius = 8 }, {
         ui.row({ gap = 6, align = "center" }, {
             ui.glyph({ name = "settings", size = 14, color = "primary" }),
@@ -239,10 +227,6 @@ function render()
         ui.row({ gap = 8, align = "center" }, {
             ui.label({ text = tr("panel.hideEmpty", "Ocultar vazio:"), fontSize = 11, color = "on_surface/0.7", flexGrow = 1 }),
             ui.button({ text = hideEmpty and "Sim" or "Nao", variant = hideEmpty and "default" or "outline", controlSize = "sm", onClick = "onToggleHideEmpty" }),
-        }),
-        ui.row({ gap = 8, align = "center" }, {
-            ui.label({ text = "Cor por uso:", fontSize = 11, color = "on_surface/0.7", flexGrow = 1 }),
-            ui.button({ text = colorMode == "by_usage" and "Sim" or "Nao", variant = colorMode == "by_usage" and "default" or "outline", controlSize = "sm", onClick = "onToggleColorMode" }),
         }),
         ui.row({ gap = 8, align = "center" }, {
             ui.label({ text = "Temp. NVMe:", fontSize = 11, color = "on_surface/0.7", flexGrow = 1 }),
