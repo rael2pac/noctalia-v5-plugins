@@ -70,7 +70,7 @@ local function formatSize(disk)
 end
 
 local formats = { "free_total", "free_only", "name_free", "percent", "name_percent" }
-local formatLabels = { free_total = "Livre / Total", free_only = "So Livre", name_free = "Nome + Livre", percent = "Percentual", name_percent = "Nome + %" }
+local formatLabels = { free_total = "Nome + Livre/Total", free_only = "So Livre", name_free = "Nome + Livre", percent = "Percentual", name_percent = "Nome + %" }
 
 function onSelect1() setDisk(1) end
 function onSelect2() setDisk(2) end
