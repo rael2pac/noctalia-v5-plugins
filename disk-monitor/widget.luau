@@ -16,7 +16,8 @@ end
 
 local function parseBytes(str)
     if not str or str == "?" then return 0 end
-    local num, unit = str:match("^([%d%.]+)(.+)$")
+    local normalized = str:gsub(",", ".")
+    local num, unit = normalized:match("^([%d%.]+)(.+)$")
     if not num then return 0 end
     num = tonumber(num)
     if not num then return 0 end
