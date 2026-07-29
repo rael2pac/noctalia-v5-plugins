@@ -93,7 +93,7 @@ local function render()
     end
 
     barWidget.render(ui.row({ gap = 3, align = "center" }, {
-        ui.glyph({ name = icon, size = 14, color = "on_surface" }),
+        ui.glyph({ name = icon, size = 16, color = "on_surface" }),
         ui.label({ text = mountLabel, fontSize = 12, fontWeight = "bold", color = "on_surface" }),
         ui.label({ text = availTxt, fontSize = 12, fontWeight = "bold", color = "on_surface" }),
     }))
