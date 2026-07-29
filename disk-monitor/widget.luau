@@ -82,8 +82,10 @@ local function render()
 
     local availBytes = parseBytes(displayDisk.avail)
     local totalBytes = parseBytes(displayDisk.size)
+    local usedBytes = parseBytes(displayDisk.used)
     local availGB = availBytes / (1024 * 1024 * 1024)
     local totalGB = totalBytes / (1024 * 1024 * 1024)
+    local usedGB = usedBytes / (1024 * 1024 * 1024)
 
     local function fmtGB(n)
         if n >= 100 then return string.format("%.0f", n)
@@ -91,14 +93,12 @@ local function render()
         else return string.format("%.2f", n) end
     end
 
-    local availTxt = displayDisk.avail or "?"
-    local totalTxt = displayDisk.size or "?"
     local mountLabel = stripSlash(displayDisk.mountpoint)
     local freeDetailTxt = ""
     if totalGB >= 1 then
-        freeDetailTxt = fmtGB(availGB) .. " GB de " .. fmtGB(totalGB) .. " GB"
+        freeDetailTxt = fmtGB(availGB) .. " GB (" .. fmtGB(usedGB) .. " GB usados)"
     else
-        freeDetailTxt = availTxt .. " de " .. totalTxt
+        freeDetailTxt = (displayDisk.avail or "?") .. " (" .. (displayDisk.used or "?") .. " usados)"
     end
 
     local displayFormat = noctalia.state.get("displayFormat") or noctalia.getConfig("displayFormat") or "free_total"
@@ -110,10 +110,10 @@ local function render()
         if totalGB >= 1 then
             text = fmtGB(availGB) .. " GB"
         else
-            text = availTxt
+            text = displayDisk.avail or "?"
         end
     elseif displayFormat == "name_free" then
-        text = mountLabel .. " " .. availTxt
+        text = mountLabel .. " " .. (displayDisk.avail or "?")
     elseif displayFormat == "percent" then
         text = tostring(pct) .. "%"
     elseif displayFormat == "name_percent" then
