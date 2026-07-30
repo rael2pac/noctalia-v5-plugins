@@ -1,6 +1,6 @@
 id           = "rael2pac/arch-updater"
 name         = "Arch Update"
-version      = "3.2.0"
+version      = "3.3.0"
 plugin_api   = 3
 author       = "rael2pac"
 license      = "MIT"
