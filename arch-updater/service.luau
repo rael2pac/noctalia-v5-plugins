@@ -14,25 +14,6 @@ local noctaliaNames = { "noctalia-qs", "noctalia-shell" }
 local pendingToast = false
 local soundPlayed = false
 
-local function resolveSoundPath()
-    local relative = "sounds/notification.wav"
-    local f = io.open(relative, "r")
-    if f then f:close() return "paplay " .. relative end
-
-    local home = os.getenv("HOME") or ""
-    local stateHome = os.getenv("XDG_STATE_HOME") or (home .. "/.local/state")
-    for _, p in ipairs({
-        stateHome .. "/noctalia/plugins/materialized/rael2pac/arch-updater/sounds/notification.wav",
-        home .. "/noctalia-v5-plugins/arch-updater/sounds/notification.wav",
-    }) do
-        f = io.open(p, "r")
-        if f then f:close() return "paplay \"" .. p .. "\"" end
-    end
-    return nil
-end
-
-local defaultSoundCmd = resolveSoundPath()
-
 local function publishState()
     noctalia.state.set("updates_raw", noctalia.json.encode(state.updates))
     noctalia.state.set("count", state.count)
@@ -140,7 +121,13 @@ local function checkFlatpak()
         if soundEnabled == nil then soundEnabled = true end
         if soundEnabled and state.count > 0 and not soundPlayed then
             soundPlayed = true
-            local cmd = noctalia.getConfig("soundCommand") or defaultSoundCmd or "canberra-gtk-play -i complete-download"
+            local soundPath = noctalia.getConfig("soundPath")
+            local cmd
+            if soundPath and soundPath ~= "" then
+                cmd = "paplay \"" .. soundPath .. "\""
+            else
+                cmd = "canberra-gtk-play -i complete-download"
+            end
             noctalia.runAsync(cmd)
         elseif state.count == 0 then
             soundPlayed = false
@@ -183,7 +170,13 @@ local function checkAUR()
             if soundEnabled == nil then soundEnabled = true end
             if soundEnabled and state.count > 0 and not soundPlayed then
                 soundPlayed = true
-                local cmd = noctalia.getConfig("soundCommand") or defaultSoundCmd or "canberra-gtk-play -i complete-download"
+                local soundPath = noctalia.getConfig("soundPath")
+                local cmd
+                if soundPath and soundPath ~= "" then
+                    cmd = "paplay \"" .. soundPath .. "\""
+                else
+                    cmd = "canberra-gtk-play -i complete-download"
+                end
                 noctalia.runAsync(cmd)
             elseif state.count == 0 then
                 soundPlayed = false

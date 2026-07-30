@@ -12,9 +12,9 @@ Gerenciador de atualizacoes para Arch Linux. Verifica updates do sistema (pacman
 - Launcher com comando `/au`
 - Atualizacao automatica a cada 2 minutos
 - Som de notificacao ao detectar novas atualizacoes (toggle nas configuracoes do plugin)
-  - Som padrao: `sounds/notification.wav` (WAV mono 44.1kHz)
-  - Fallback: `canberra-gtk-play` (libcanberra)
-  - Para usar outro som, substitua o arquivo ou configure o comando no menu do plugin
+  - Padrao: `canberra-gtk-play` (som do sistema)
+  - Configuravel: use `paplay /caminho/som.wav` ou qualquer comando
+
 
 ### hdmi-toggle
 Gerenciador de monitores. Lista todos os monitores conectados e permite ligar/desligar cada um.
@@ -55,7 +55,8 @@ cp -r hdmi-toggle ~/.local/share/noctalia/plugins/
 ### arch-updater
 - `checkupdates` (pacman-contrib)
 - `yay` (ou outro AUR helper)
-- `libcanberra` (som de notificacao padrao - opcional)
+- `libcanberra` (som de notificacao - opcional, para o som padrao)
+
 
 ### hdmi-toggle
 - `niri` (compositor Wayland)

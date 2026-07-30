@@ -45,6 +45,6 @@
 
     "settings.soundEnabled.label": "Notification Sound",
     "settings.soundEnabled.description": "Play sound when new updates are detected",
-    "settings.soundCmd.label": "Sound Command",
-    "settings.soundCmd.description": "Command to play the notification sound"
+    "settings.soundPath.label": "Caminho do som",
+    "settings.soundPath.description": "Caminho do arquivo .wav (deixe vazio para som padrão do sistema)"
 }

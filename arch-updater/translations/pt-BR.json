@@ -46,6 +46,6 @@
 
     "settings.soundEnabled.label": "Som de notificação",
     "settings.soundEnabled.description": "Tocar som quando novas atualizações forem detectadas",
-    "settings.soundCmd.label": "Comando do som",
-    "settings.soundCmd.description": "Comando executado para tocar o som de notificação"
+    "settings.soundPath.label": "Caminho do som",
+    "settings.soundPath.description": "Caminho do arquivo .wav (deixe vazio para som padrão do sistema)"
 }
