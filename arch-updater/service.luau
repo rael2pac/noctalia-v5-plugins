@@ -12,6 +12,26 @@ local state = {
 
 local noctaliaNames = { "noctalia-qs", "noctalia-shell" }
 local pendingToast = false
+local soundPlayed = false
+
+local function resolveSoundPath()
+    local relative = "sounds/notification.wav"
+    local f = io.open(relative, "r")
+    if f then f:close() return "paplay " .. relative end
+
+    local home = os.getenv("HOME") or ""
+    local stateHome = os.getenv("XDG_STATE_HOME") or (home .. "/.local/state")
+    for _, p in ipairs({
+        stateHome .. "/noctalia/plugins/materialized/rael2pac/arch-updater/sounds/notification.wav",
+        home .. "/noctalia-v5-plugins/arch-updater/sounds/notification.wav",
+    }) do
+        f = io.open(p, "r")
+        if f then f:close() return "paplay \"" .. p .. "\"" end
+    end
+    return nil
+end
+
+local defaultSoundCmd = resolveSoundPath()
 
 local function publishState()
     noctalia.state.set("updates_raw", noctalia.json.encode(state.updates))
@@ -116,6 +136,16 @@ local function checkFlatpak()
         state.lastRefreshTime = string.format("%02d:%02d:%02d", now.hour, now.min, now.sec)
         publishState()
 
+        local soundEnabled = noctalia.getConfig("soundEnabled")
+        if soundEnabled == nil then soundEnabled = true end
+        if soundEnabled and state.count > 0 and not soundPlayed then
+            soundPlayed = true
+            local cmd = noctalia.getConfig("soundCommand") or defaultSoundCmd or "canberra-gtk-play -i complete-download"
+            noctalia.runAsync(cmd)
+        elseif state.count == 0 then
+            soundPlayed = false
+        end
+
         if pendingToast then
             pendingToast = false
             local total = state.count
@@ -149,6 +179,16 @@ local function checkAUR()
             state.lastRefreshTime = string.format("%02d:%02d:%02d", now.hour, now.min, now.sec)
             publishState()
 
+            local soundEnabled = noctalia.getConfig("soundEnabled")
+            if soundEnabled == nil then soundEnabled = true end
+            if soundEnabled and state.count > 0 and not soundPlayed then
+                soundPlayed = true
+                local cmd = noctalia.getConfig("soundCommand") or defaultSoundCmd or "canberra-gtk-play -i complete-download"
+                noctalia.runAsync(cmd)
+            elseif state.count == 0 then
+                soundPlayed = false
+            end
+
             if pendingToast then
                 pendingToast = false
                 local total = state.count
@@ -178,6 +218,8 @@ local function refresh(showToast)
     state.aurStr = ""
     state.flatpakStr = ""
     state.noctaliaUpdate = false
+
+    publishState()
 
     pendingToast = (showToast == true)
     if pendingToast then
@@ -220,7 +262,7 @@ local function doUpdate()
         .. 'echo "=========================================="\n'
         .. '\n'
         .. 'echo -e "${Y}• Cache pacman (paccache -k 3)...${N}"\n'
-        .. 'PAC_LOG=$(paccache -r -k 3 2>&1)\n'
+        .. 'PAC_LOG=$(sudo paccache -r -k 3 2>&1)\n'
         .. 'echo "$PAC_LOG"\n'
         .. 'echo\n'
         .. '\n'
@@ -252,7 +294,7 @@ local function doUpdate()
         .. 'echo\n'
         .. '\n'
         .. 'echo -e "${Y}• Logs (journalctl 7d)...${N}"\n'
-        .. 'JOURNAL_LOG=$(journalctl --vacuum-time=7d 2>&1)\n'
+        .. 'JOURNAL_LOG=$(sudo journalctl --vacuum-time=7d 2>&1)\n'
         .. 'echo "$JOURNAL_LOG"\n'
         .. 'echo\n'
         .. '\n'

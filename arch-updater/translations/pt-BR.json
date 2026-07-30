@@ -42,5 +42,10 @@
     "settings.bar.boldText.label": "Contagem em Negrito",
     "settings.bar.boldText.description": "Exibir contagem em negrito",
     "settings.bar.noctaliaHighlight.label": "Destaque Noctalia",
-    "settings.bar.noctaliaHighlight.description": "Destacar quando Noctalia tiver atualização"
+    "settings.bar.noctaliaHighlight.description": "Destacar quando Noctalia tiver atualização",
+
+    "settings.soundEnabled.label": "Som de notificação",
+    "settings.soundEnabled.description": "Tocar som quando novas atualizações forem detectadas",
+    "settings.soundCmd.label": "Comando do som",
+    "settings.soundCmd.description": "Comando executado para tocar o som de notificação"
 }

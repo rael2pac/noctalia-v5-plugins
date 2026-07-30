@@ -1,8 +1,8 @@
 -- widget.luau -- Arch Updater: bar widget showing update count
 
-local count = nil
-local noctaliaUpdate = false
-local loaded = false
+local count = noctalia.state.get("count") or 0
+local noctaliaUpdate = noctalia.state.get("noctaliaUpdate") == true
+local loaded = true
 
 local function tr(key, fallback)
     local v = noctalia.tr(key)
@@ -40,6 +40,8 @@ local function render()
     barWidget.setTooltip(nil)
 end
 
+render()
+
 noctalia.state.watch("count", function(value)
     count = value or 0
     loaded = true
@@ -48,6 +50,7 @@ end)
 
 noctalia.state.watch("noctaliaUpdate", function(value)
     noctaliaUpdate = value == true
+    loaded = true
     render()
 end)
 

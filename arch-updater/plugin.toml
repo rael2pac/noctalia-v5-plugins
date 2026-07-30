@@ -112,3 +112,17 @@ type        = "bool"
 label_key   = "settings.showToasts.label"
 description_key = "settings.showToasts.description"
 default     = true
+
+[[setting]]
+key         = "soundEnabled"
+type        = "bool"
+label_key   = "settings.soundEnabled.label"
+description_key = "settings.soundEnabled.description"
+default     = true
+
+[[setting]]
+key         = "soundCommand"
+type        = "string"
+label_key   = "settings.soundCmd.label"
+description_key = "settings.soundCmd.description"
+default     = "canberra-gtk-play -i complete-download"
