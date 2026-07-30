@@ -1,6 +1,6 @@
 id           = "rael2pac/arch-updater"
 name         = "Arch Update"
-version      = "3.1.0"
+version      = "3.2.0"
 plugin_api   = 3
 author       = "rael2pac"
 license      = "MIT"
@@ -121,8 +121,9 @@ description_key = "settings.soundEnabled.description"
 default     = true
 
 [[setting]]
-key         = "soundCommand"
+key         = "soundPath"
 type        = "string"
-label_key   = "settings.soundCmd.label"
-description_key = "settings.soundCmd.description"
-default     = "canberra-gtk-play -i complete-download"
+label_key   = "settings.soundPath.label"
+description_key = "settings.soundPath.description"
+default     = ""
+
