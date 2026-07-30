@@ -1,6 +1,6 @@
 id           = "rael2pac/arch-updater"
 name         = "Arch Update"
-version      = "3.4.0"
+version      = "3.4.1"
 plugin_api   = 3
 author       = "rael2pac"
 license      = "MIT"
@@ -103,7 +103,7 @@ key         = "cachePreserveList"
 type        = "string"
 label_key   = "settings.cachePreserveList.label"
 description_key = "settings.cachePreserveList.description"
-default     = "noctalia noctalia-qs fontconfig dolphin wofi-drun thumbnails lutris ZapZap swww yay"
+default     = "noctalia noctalia-qs fontconfig fish mesa_shader_cache thumbnails kitty glycin ZapZap lutris"
 advanced    = true
 
 [[setting]]
@@ -126,4 +126,3 @@ type        = "string"
 label_key   = "settings.soundPath.label"
 description_key = "settings.soundPath.description"
 default     = ""
-
