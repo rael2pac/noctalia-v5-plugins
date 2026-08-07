@@ -11,8 +11,28 @@ local state = {
 }
 
 local noctaliaNames = { "noctalia-qs", "noctalia-shell" }
-local pendingToast = false
-local soundPlayed = false
+
+local previousIds = {}
+local baselineSet = false
+local refreshInFlight = false
+local refreshQueued = false
+local updating = false
+local updatingTicks = 0
+
+local markerPath
+do
+    local dir = noctalia.pluginDataDir()
+    if dir then
+        markerPath = dir .. "/update-done"
+    else
+        markerPath = "/tmp/noctalia-arch-updater-done"
+    end
+end
+if noctalia.fileExists(markerPath) then
+    noctalia.removeFile(markerPath)
+end
+
+local refresh
 
 local function publishState()
     noctalia.state.set("updates_raw", noctalia.json.encode(state.updates))
@@ -80,7 +100,85 @@ local function joinNames(updates)
     return table.concat(names, "\n")
 end
 
-local function checkFlatpak()
+local function snapshotIds(updates)
+    local ids = {}
+    for _, u in ipairs(updates) do
+        ids[u.source .. ":" .. u.id] = true
+    end
+    return ids
+end
+
+local function buildPackageList(updates)
+    local lines = {}
+    for _, u in ipairs(updates) do
+        local prefix = ""
+        if u.repo and u.repo ~= "" then prefix = u.repo .. "/" end
+        table.insert(lines, prefix .. u.name .. "  " .. u.oldVer .. " -> " .. u.newVer)
+    end
+    return table.concat(lines, "\n")
+end
+
+local function resetState()
+    state.updates = {}
+    state.systemStr = ""
+    state.aurStr = ""
+    state.flatpakStr = ""
+    state.noctaliaUpdate = false
+    state.count = 0
+    publishState()
+end
+
+local function finalizeRefresh(prev, showToast)
+    local newUpdates = {}
+    for _, u in ipairs(state.updates) do
+        if not prev[u.source .. ":" .. u.id] then
+            table.insert(newUpdates, u)
+        end
+    end
+
+    previousIds = snapshotIds(state.updates)
+    state.count = #state.updates
+    local now = os.date("*t")
+    state.lastRefreshTime = string.format("%02d:%02d:%02d", now.hour, now.min, now.sec)
+    publishState()
+
+    local showToasts = noctalia.getConfig("showToasts")
+    if showToasts == nil then showToasts = true end
+
+    if not baselineSet then
+        baselineSet = true
+        if showToast and showToasts and state.count > 0 then
+            noctalia.notify("Arch Updater", tostring(state.count) .. " " .. (noctalia.tr("toast.updatesAvailable") or "updates available"))
+        end
+    elseif #newUpdates > 0 then
+        local soundEnabled = noctalia.getConfig("soundEnabled")
+        if soundEnabled == nil then soundEnabled = true end
+        if soundEnabled then
+            local soundPath = noctalia.getConfig("soundPath")
+            local cmd
+            if soundPath and soundPath ~= "" then
+                cmd = "paplay \"" .. soundPath .. "\""
+            else
+                cmd = "canberra-gtk-play -i complete-download"
+            end
+            noctalia.runAsync(cmd)
+        end
+        if showToasts then
+            local summary = noctalia.trp("toast.newUpdates", #newUpdates)
+            noctalia.notify("Arch Updater", summary .. "\n" .. buildPackageList(newUpdates))
+        end
+    elseif showToast and showToasts then
+        noctalia.notify("Arch Updater", noctalia.tr("toast.noNewUpdates"))
+    end
+
+    refreshInFlight = false
+    if refreshQueued then
+        refreshQueued = false
+        refresh(true)
+    end
+end
+
+local function checkFlatpak(prev, showToast)
     local cmd = "flatpak update --no-deploy --noninteractive >/dev/null 2>&1; "
         .. "join -t'\\t' -j1 "
         .. "<(flatpak remote-ls --updates --columns=application,name,version 2>/dev/null | sort -t'\\t' -k1,1) "
@@ -111,37 +209,11 @@ local function checkFlatpak()
         else
             state.flatpakStr = ""
         end
-        state.count = #state.updates
-
-        local now = os.date("*t")
-        state.lastRefreshTime = string.format("%02d:%02d:%02d", now.hour, now.min, now.sec)
-        publishState()
-
-        local soundEnabled = noctalia.getConfig("soundEnabled")
-        if soundEnabled == nil then soundEnabled = true end
-        if soundEnabled and state.count > 0 and not soundPlayed then
-            soundPlayed = true
-            local soundPath = noctalia.getConfig("soundPath")
-            local cmd
-            if soundPath and soundPath ~= "" then
-                cmd = "paplay \"" .. soundPath .. "\""
-            else
-                cmd = "canberra-gtk-play -i complete-download"
-            end
-            noctalia.runAsync(cmd)
-        elseif state.count == 0 then
-            soundPlayed = false
-        end
-
-        if pendingToast then
-            pendingToast = false
-            local total = state.count
-            noctalia.notify("Arch Updater", tostring(total) .. " " .. (noctalia.tr("toast.updatesAvailable") or "updates available"))
-        end
+        finalizeRefresh(prev, showToast)
     end)
 end
 
-local function checkAUR()
+local function checkAUR(prev, showToast)
     local cmd = noctalia.getConfig("aurCmd") or "yay -Qua 2>/dev/null"
     noctalia.runAsync(cmd, function(result)
         if result.exitCode == 0 and result.stdout and result.stdout ~= "" then
@@ -158,40 +230,15 @@ local function checkAUR()
         local flatpakEnabled = noctalia.getConfig("flatpakEnabled")
         if flatpakEnabled == nil then flatpakEnabled = true end
         if flatpakEnabled then
-            checkFlatpak()
+            checkFlatpak(prev, showToast)
         else
             state.flatpakStr = ""
-            state.count = #state.updates
-            local now = os.date("*t")
-            state.lastRefreshTime = string.format("%02d:%02d:%02d", now.hour, now.min, now.sec)
-            publishState()
-
-            local soundEnabled = noctalia.getConfig("soundEnabled")
-            if soundEnabled == nil then soundEnabled = true end
-            if soundEnabled and state.count > 0 and not soundPlayed then
-                soundPlayed = true
-                local soundPath = noctalia.getConfig("soundPath")
-                local cmd
-                if soundPath and soundPath ~= "" then
-                    cmd = "paplay \"" .. soundPath .. "\""
-                else
-                    cmd = "canberra-gtk-play -i complete-download"
-                end
-                noctalia.runAsync(cmd)
-            elseif state.count == 0 then
-                soundPlayed = false
-            end
-
-            if pendingToast then
-                pendingToast = false
-                local total = state.count
-                noctalia.notify("Arch Updater", tostring(total) .. " " .. (noctalia.tr("toast.updatesAvailable") or "updates available"))
-            end
+            finalizeRefresh(prev, showToast)
         end
     end)
 end
 
-local function checkSystem()
+local function checkSystem(prev, showToast)
     local cmd = noctalia.getConfig("systemCmd") or "checkupdates 2>/dev/null"
     noctalia.runAsync(cmd, function(result)
         if result.exitCode == 0 and result.stdout and result.stdout ~= "" then
@@ -201,11 +248,22 @@ local function checkSystem()
             state.updates = {}
             state.systemStr = ""
         end
-        checkAUR()
+        checkAUR(prev, showToast)
     end)
 end
 
-local function refresh(showToast)
+function refresh(showToast)
+    if updating then
+        return
+    end
+    if refreshInFlight then
+        if showToast then refreshQueued = true end
+        return
+    end
+    refreshInFlight = true
+    refreshQueued = false
+
+    local prev = previousIds
     state.updates = {}
     state.systemStr = ""
     state.aurStr = ""
@@ -214,11 +272,15 @@ local function refresh(showToast)
 
     publishState()
 
-    pendingToast = (showToast == true)
-    if pendingToast then
-        noctalia.notify("Arch Updater", noctalia.tr("toast.refreshing"))
+    if showToast then
+        local showToasts = noctalia.getConfig("showToasts")
+        if showToasts == nil then showToasts = true end
+        if showToasts then
+            noctalia.notify("Arch Updater", noctalia.tr("toast.refreshing"))
+        end
     end
-    checkSystem()
+
+    checkSystem(prev, showToast)
 end
 
 local function doUpdate()
@@ -435,11 +497,15 @@ local function doUpdate()
 
     script = script
         .. 'echo "========================================="\n'
+        .. ': > "' .. markerPath .. '"\n'
+        .. 'noctalia msg plugin rael2pac/arch-updater:updater all update-done >/dev/null 2>&1 || true\n'
         .. 'read -p "Pressione Enter para fechar..."\n'
 
     noctalia.runInTerminal(script)
 
-    refresh(false)
+    updating = true
+    updatingTicks = 0
+    resetState()
 end
 
 noctalia.setUpdateInterval(60000)
@@ -458,6 +524,21 @@ noctalia.state.watch("update_request", function(value)
 end)
 
 function update()
+    if updating then
+        updatingTicks = updatingTicks + 1
+        if noctalia.fileExists(markerPath) then
+            noctalia.removeFile(markerPath)
+            updating = false
+            refresh(false)
+        elseif updatingTicks >= 10 then
+            if noctalia.fileExists(markerPath) then
+                noctalia.removeFile(markerPath)
+            end
+            updating = false
+            refresh(false)
+        end
+        return
+    end
     refresh(false)
 end
 
@@ -470,6 +551,13 @@ function onIpc(event, payload)
         refresh(true)
     elseif event == "update" then
         doUpdate()
+    elseif event == "update-done" then
+        updating = false
+        updatingTicks = 0
+        if noctalia.fileExists(markerPath) then
+            noctalia.removeFile(markerPath)
+        end
+        refresh(false)
     else
         noctalia.log("noctaliav5: unknown IPC event: " .. event)
     end

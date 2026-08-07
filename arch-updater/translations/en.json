@@ -5,6 +5,9 @@
 
     "toast.refreshing": "Refreshing updates...",
     "toast.updatesAvailable": "updates available",
+    "toast.newUpdates.one": "1 new update:",
+    "toast.newUpdates.other": "{count} new updates:",
+    "toast.noNewUpdates": "No new updates",
 
     "panel.title": "Archlinux Update",
     "panel.noUpdates": "No updates available",
