@@ -1,7 +1,7 @@
 [[plugin]]
 id = "rael2pac/arch-updater"
 name = "Arch Update"
-version = "3.4.2"
+version = "3.5.0"
 author = "rael2pac"
 license = "MIT"
 icon = "arrow-big-down-lines"

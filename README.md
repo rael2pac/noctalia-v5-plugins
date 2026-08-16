@@ -5,15 +5,17 @@ Plugins para Noctalia v5 (Wayland Shell).
 ## Plugins
 
 ### arch-updater
-Gerenciador de atualizacoes para Arch Linux. Verifica updates do sistema (pacman), AUR e Flatpak.
+Gerenciador de atualizações para Arch Linux. Verifica updates do sistema (pacman), AUR e Flatpak.
 
 - Widget na barra com icone e contagem de updates
 - Painel com lista de pacotes, versoes e cores por repo
 - Launcher com comando `/au`
-- Atualizacao automatica a cada 2 minutos
-- Som de notificacao ao detectar novas atualizacoes (toggle nas configuracoes do plugin)
-  - Padrao: `canberra-gtk-play` (som do sistema)
-  - Configuravel: use `paplay /caminho/som.wav` ou qualquer comando
+- Verificacao automatica com intervalo configuravel (padrao 120 minutos)
+- Notificacoes de novas atualizacoes vao para a **Central de Notificacoes** (via `notify-send`)
+  - Toggle nas configuracoes: `Enviar para a Central de Notificações`
+  - Som de notificacao ao detectar novas atualizacoes (toggle nas configuracoes do plugin)
+    - Padrao: `canberra-gtk-play` (som do sistema)
+    - Configuravel: use `paplay /caminho/som.wav` ou qualquer comando
 
 
 ### hdmi-toggle
@@ -55,6 +57,7 @@ cp -r hdmi-toggle ~/.local/share/noctalia/plugins/
 ### arch-updater
 - `checkupdates` (pacman-contrib)
 - `yay` (ou outro AUR helper)
+- `libnotify` (comando `notify-send`, para a central de notificacoes)
 - `libcanberra` (som de notificacao - opcional, para o som padrao)
 
 

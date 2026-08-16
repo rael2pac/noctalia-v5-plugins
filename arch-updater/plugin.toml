@@ -1,13 +1,13 @@
 id           = "rael2pac/arch-updater"
 name         = "Arch Update"
-version      = "3.4.2"
+version      = "3.5.0"
 plugin_api   = 3
 author       = "rael2pac"
 license      = "MIT"
 icon         = "arrow-big-down-lines"
 description  = "A plugin to manage updates on Arch Linux (system, AUR, Flatpak)"
 tags         = ["Bar", "Desktop", "Panel", "Launcher", "System", "Utility"]
-dependencies = ["checkupdates", "yay"]
+dependencies = ["checkupdates", "yay", "libnotify"]
 
 [[service]]
 id    = "updater"
@@ -126,3 +126,18 @@ type        = "string"
 label_key   = "settings.soundPath.label"
 description_key = "settings.soundPath.description"
 default     = ""
+
+[[setting]]
+key         = "notifySystem"
+type        = "bool"
+label_key   = "settings.notifySystem.label"
+description_key = "settings.notifySystem.description"
+default     = true
+
+[[setting]]
+key         = "notifyIcon"
+type        = "string"
+label_key   = "settings.notifyIcon.label"
+description_key = "settings.notifyIcon.description"
+default     = "system-software-update"
+advanced    = true

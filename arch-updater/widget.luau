@@ -19,6 +19,12 @@ local function render()
     local hideOnEmpty = noctalia.getConfig("hideOnEmpty")
     if hideOnEmpty == nil then hideOnEmpty = false end
 
+    local boldText = noctalia.getConfig("boldText")
+    if boldText == nil then boldText = true end
+
+    local noctaliaHighlight = noctalia.getConfig("noctaliaHighlight")
+    if noctaliaHighlight == nil then noctaliaHighlight = true end
+
     if hideOnEmpty and count == 0 then
         barWidget.setVisible(false)
         return
@@ -26,18 +32,27 @@ local function render()
     barWidget.setVisible(true)
 
     local glyphColor = "on_surface_variant"
-    if noctaliaUpdate then
-        glyphColor = "secondary"
-    elseif count and count > 0 then
+    if count and count > 0 then
         glyphColor = "primary"
+    end
+    if noctaliaHighlight and noctaliaUpdate then
+        glyphColor = "secondary"
     end
 
     barWidget.render(ui.row({ gap = 5, align = "center" }, {
         ui.glyph({ name = "arrow-big-down-lines", size = 16, color = glyphColor }),
-        ui.label({ text = tostring(count or 0), fontSize = 13, fontWeight = "bold", color = "on_surface" }),
+        ui.label({ text = tostring(count or 0), fontSize = 13, fontWeight = boldText and "bold" or "normal", color = "on_surface" }),
     }))
 
-    barWidget.setTooltip(nil)
+    local tooltip
+    if noctaliaUpdate then
+        tooltip = tr("tooltip.noctaliaUpdates", "Noctalia Updates available")
+    elseif count and count > 0 then
+        tooltip = tr("tooltip.availableUpdates", "Available Updates") .. ": " .. tostring(count)
+    else
+        tooltip = tr("tooltip.noUpdates", "No updates")
+    end
+    barWidget.setTooltip(tooltip)
 end
 
 render()

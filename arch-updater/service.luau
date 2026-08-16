@@ -10,7 +10,7 @@ local state = {
     lastRefreshTime = "",
 }
 
-local noctaliaNames = { "noctalia-qs", "noctalia-shell" }
+local noctaliaNames = { "noctalia", "noctalia-git", "noctalia-qs", "noctalia-shell" }
 
 local previousIds = {}
 local baselineSet = false
@@ -118,6 +118,55 @@ local function buildPackageList(updates)
     return table.concat(lines, "\n")
 end
 
+local function shellEscape(s)
+    if not s then return "" end
+    s = string.gsub(s, "\\", "\\\\")
+    s = string.gsub(s, '"', '\\"')
+    return s
+end
+
+local function countLines(s)
+    if not s or s == "" then return 0 end
+    local n = 0
+    for _ in string.gmatch(s, "[^\n]+") do n = n + 1 end
+    return n
+end
+
+local function truncateLines(s, maxLines)
+    if not s then return "" end
+    local lines = {}
+    for line in string.gmatch(s, "[^\n]+") do
+        table.insert(lines, line)
+        if #lines >= maxLines then break end
+    end
+    return table.concat(lines, "\n")
+end
+
+local function sendSystemNotify(summary, body)
+    local useSystem = noctalia.getConfig("notifySystem")
+    if useSystem == nil then useSystem = true end
+
+    if not useSystem then
+        noctalia.notify("Arch Updater", summary .. "\n" .. (body or ""))
+        return
+    end
+
+    local icon = noctalia.getConfig("notifyIcon")
+    if icon == nil or icon == "" then icon = "system-software-update" end
+
+    local bodyText = truncateLines(body or "", 12)
+    local total = countLines(body)
+    if total > 12 then
+        local more = noctalia.trp("toast.more", total - 12)
+        if more == nil or more == "toast.more" then more = "+ " .. tostring(total - 12) .. " more" end
+        bodyText = bodyText .. "\n" .. more
+    end
+
+    local cmd = 'notify-send -a "Arch Updater" -i "' .. shellEscape(icon) .. '" -u normal "'
+        .. shellEscape(summary) .. '" "' .. shellEscape(bodyText) .. '"'
+    noctalia.runAsync(cmd)
+end
+
 local function resetState()
     state.updates = {}
     state.systemStr = ""
@@ -148,7 +197,7 @@ local function finalizeRefresh(prev, showToast)
     if not baselineSet then
         baselineSet = true
         if showToast and showToasts and state.count > 0 then
-            noctalia.notify("Arch Updater", tostring(state.count) .. " " .. (noctalia.tr("toast.updatesAvailable") or "updates available"))
+            sendSystemNotify(tostring(state.count) .. " " .. (noctalia.tr("toast.updatesAvailable") or "updates available"), buildPackageList(state.updates))
         end
     elseif #newUpdates > 0 then
         local soundEnabled = noctalia.getConfig("soundEnabled")
@@ -165,7 +214,7 @@ local function finalizeRefresh(prev, showToast)
         end
         if showToasts then
             local summary = noctalia.trp("toast.newUpdates", #newUpdates)
-            noctalia.notify("Arch Updater", summary .. "\n" .. buildPackageList(newUpdates))
+            sendSystemNotify(summary, buildPackageList(newUpdates))
         end
     elseif showToast and showToasts then
         noctalia.notify("Arch Updater", noctalia.tr("toast.noNewUpdates"))
@@ -508,7 +557,13 @@ local function doUpdate()
     resetState()
 end
 
-noctalia.setUpdateInterval(60000)
+local function applyRefreshInterval()
+    local intervalMin = noctalia.getConfig("refreshInterval")
+    if type(intervalMin) ~= "number" or intervalMin < 1 then intervalMin = 120 end
+    noctalia.setUpdateInterval(intervalMin * 60000)
+end
+
+applyRefreshInterval()
 refresh(false)
 
 noctalia.state.watch("refresh_request", function(value)
@@ -543,6 +598,7 @@ function update()
 end
 
 function onConfigChanged()
+    applyRefreshInterval()
     refresh(false)
 end
 

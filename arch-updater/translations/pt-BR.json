@@ -8,6 +8,7 @@
     "toast.newUpdates.one": "1 nova atualização:",
     "toast.newUpdates.other": "{count} novas atualizações:",
     "toast.noNewUpdates": "Nenhuma atualização nova",
+    "toast.more": "+ {count} mais",
 
     "panel.title": "Archlinux Update",
     "panel.pacotes": "Pacotes",
@@ -50,5 +51,10 @@
     "settings.soundEnabled.label": "Som de notificação",
     "settings.soundEnabled.description": "Tocar som quando novas atualizações forem detectadas",
     "settings.soundPath.label": "Caminho do som",
-    "settings.soundPath.description": "Caminho do arquivo .wav (deixe vazio para som padrão do sistema)"
+    "settings.soundPath.description": "Caminho do arquivo .wav (deixe vazio para som padrão do sistema)",
+
+    "settings.notifySystem.label": "Enviar para a Central de Notificações",
+    "settings.notifySystem.description": "Enviar novas atualizações para a central de notificações (notify-send); desative para usar o toast interno",
+    "settings.notifyIcon.label": "Ícone da notificação",
+    "settings.notifyIcon.description": "Nome do ícone temático usado na notificação (ex.: system-software-update)"
 }
