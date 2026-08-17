@@ -16,6 +16,7 @@ local previousIds = {}
 local baselineSet = false
 local refreshInFlight = false
 local refreshQueued = false
+local refreshInFlightTicks = 0
 local updating = false
 local updatingTicks = 0
 
@@ -228,7 +229,7 @@ local function finalizeRefresh(prev, showToast)
 end
 
 local function checkFlatpak(prev, showToast)
-    local cmd = "flatpak update --no-deploy --noninteractive >/dev/null 2>&1; "
+    local cmd = "timeout 30 flatpak update --no-deploy --noninteractive >/dev/null 2>&1 || true; "
         .. "join -t'\\t' -j1 "
         .. "<(flatpak remote-ls --updates --columns=application,name,version 2>/dev/null | sort -t'\\t' -k1,1) "
         .. "<(flatpak list --columns=application,version 2>/dev/null | sort -t'\\t' -k1,1)"
@@ -306,10 +307,11 @@ function refresh(showToast)
         return
     end
     if refreshInFlight then
-        if showToast then refreshQueued = true end
+        refreshQueued = true
         return
     end
     refreshInFlight = true
+    refreshInFlightTicks = 0
     refreshQueued = false
 
     local prev = previousIds
@@ -563,8 +565,25 @@ local function applyRefreshInterval()
     noctalia.setUpdateInterval(intervalMin * 60000)
 end
 
+local function waitForNetwork(callback, attempts)
+    attempts = attempts or 0
+    noctalia.runAsync("ping -c1 -W2 1.1.1.1 >/dev/null 2>&1", function(result)
+        if result.exitCode == 0 then
+            callback()
+        elseif attempts < 15 then
+            noctalia.runAsync("sleep 5", function()
+                waitForNetwork(callback, attempts + 1)
+            end)
+        else
+            callback()
+        end
+    end)
+end
+
 applyRefreshInterval()
-refresh(false)
+waitForNetwork(function()
+    refresh(false)
+end)
 
 noctalia.state.watch("refresh_request", function(value)
     if value and value > 0 then
@@ -591,6 +610,18 @@ function update()
             end
             updating = false
             refresh(false)
+        end
+        return
+    end
+    if refreshInFlight then
+        refreshInFlightTicks = refreshInFlightTicks + 1
+        if refreshInFlightTicks >= 30 then
+            refreshInFlight = false
+            refreshInFlightTicks = 0
+            if refreshQueued then
+                refreshQueued = false
+                refresh(true)
+            end
         end
         return
     end
