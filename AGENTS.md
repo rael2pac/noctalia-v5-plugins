@@ -8,7 +8,7 @@ computador a partir da **fonte git** `rael2pac`
 
 | Plugin | Id | Versão atual |
 | --- | --- | --- |
-| arch-updater | `rael2pac/arch-updater` | 3.5.1 |
+| arch-updater | `rael2pac/arch-updater` | 3.5.3 |
 | hdmi-toggle | `rael2pac/hdmi-toggle` | 1.0.0 |
 | disk-monitor | `rael2pac/disk-monitor` | 2.0.0 |
 | audio-switcher | `rael2pac/audio-switcher` | 1.2.6 |
